@@ -550,6 +550,8 @@ def main():
     if not url and repo:
         owner, name = repo.split("/")
         url = f"https://{owner}.github.io/{name}/"
+    if url:   # 알림에서 열 때 예전에 저장된 화면 대신 항상 새 화면이 나오게
+        url = f"{url}{'&' if '?' in url else '?'}v={build}"
     if not args.demo:
         send_ntfy("오늘의 ETF 추천", msg, url)
 
