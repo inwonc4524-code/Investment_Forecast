@@ -26,8 +26,9 @@ import requests
 KST = timezone(timedelta(hours=9))
 HERE = os.path.dirname(os.path.abspath(__file__))
 DOCS = os.path.join(HERE, "docs")
-TOP_N = 3                    # '요즘 추천' 카드마다 보여줄 개수
-LONG_SHOW = 10               # '오래 꾸준히' 목록에 보여줄 개수
+TOP_N = 10                   # 추천 카드마다 보여줄 개수
+LONG_SHOW = 50               # 순위 목록에 넣을 개수 (11위부터는 더보기)
+FIRST_SHOW = 10              # 처음에 보여줄 개수
 MIN_DAYS = 220               # 이보다 데이터가 짧으면(상장 1년 미만 등) 제외
 PERIODS = ["1d", "1w", "1m", 1, 3, 5, 10, 20]  # '오래 꾸준히' 기간
 PERIOD_INFO = {   # 기간: (버튼 이름, 칸 하나의 단위, 세는 말, 기간 이름)
@@ -354,7 +355,7 @@ def build_table(universe, closes):
 
 def picks(df):
     return {
-        "overall": df[df.above_ma200].nlargest(5, "total"),
+        "overall": df[df.above_ma200].nlargest(TOP_N, "total"),
         "momentum": df[df.above_ma200 & (df.mom_raw > 0)].nlargest(TOP_N, "mom_score"),
         "rebound": df[df.rebound_ok].nlargest(TOP_N, "rebound_score"),
         "stable": df[df.stab_ok].nlargest(TOP_N, "stab_score"),
@@ -614,7 +615,7 @@ def long_panel(rows, years):
         n_blocks = len(r["blocks"])
         avg = " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else ""
         items.append(
-            f"<li class='lt'><div class='rk'>{medal}</div><div class='lb'>"
+            f"<li class='lt{' hide' if i > FIRST_SHOW else ''}'><div class='rk'>{medal}</div><div class='lb'>"
             f"<b>{E(r['name'])}</b>"
             f"<span class='tk'>{FLAG.get(r['market'], '')} {E(short_ticker(r['ticker']))} · {E(r['category'])}</span>"
             f"<div class='boxes'>{boxes}</div>"
@@ -627,7 +628,9 @@ def long_panel(rows, years):
     note = f"이 기간 동안 가격이 내려간 ETF {lost}개는 뺐어요. " if lost else ""
     return (f"<p class='how'>🟥 = 그 {unit}에 올랐어요 &nbsp; 🟦 = 그 {unit}에 내렸어요 &nbsp; ⬜ = 장이 쉬었어요 "
             f"(칸을 누르고 있으면 날짜가 보여요)<br>1일 = 그 나라 장 시작부터 마감까지 1시간씩 · 1주 = 7일 · 1달 = 4주 · 1년 = 12달. 마감 시각은 나라마다 달라요 (한국 오후 3:30 · 중국 오후 4시 · 홍콩 오후 5시 · 미국 아침 6시, 한국시간)<br>💬 = 그 기간에 왜 올랐는지 Claude가 뉴스를 보고 짧게 정리한 거예요 (틀릴 수 있어요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
-            f"<ol class='longlist'>{''.join(items) or '<li class=empty>여기에 맞는 ETF가 없어요</li>'}</ol>")
+            f"<ol class='longlist'>{''.join(items) or '<li class=empty>여기에 맞는 ETF가 없어요</li>'}</ol>"
+            + (f"<button class='more' onclick='moreList(this)'>더보기 ({len(ranked[:LONG_SHOW]) - FIRST_SHOW}개 더 · {min(len(ranked), LONG_SHOW)}위까지)</button>"
+               if len(ranked[:LONG_SHOW]) > FIRST_SHOW else ""))
 
 
 CSS = """
@@ -660,6 +663,8 @@ th,td{padding:9px 10px;text-align:right;white-space:nowrap;border-bottom:1px sol
 th{cursor:pointer;color:var(--sub);font-weight:600;position:sticky;top:0;background:var(--card)}
 th:nth-child(-n+2),td:nth-child(-n+2){text-align:left}
 .how{font-size:13px;color:var(--sub);line-height:1.6;margin:4px 0 10px}
+.longlist .lt.hide{display:none}.longlist.open .lt.hide{display:flex}
+.more{display:block;width:100%;margin:8px 0 0;padding:11px;border:1px dashed var(--line);border-radius:12px;background:transparent;color:var(--sub);font:inherit;font-size:14px;cursor:pointer}
 .longlist{list-style:none;padding:0;background:var(--card);border:1px solid var(--line);border-radius:16px}
 .lt{padding:12px 14px;align-items:center}.rk{width:30px;flex:0 0 30px;font-size:18px;font-weight:700;text-align:center}
 .lb{flex:1;min-width:0;gap:2px}.lb .boxes{display:flex;flex-direction:row;flex-wrap:wrap;gap:3px;margin:5px 0 3px}
@@ -675,6 +680,7 @@ footer{color:var(--sub);font-size:12px;line-height:1.7;margin-top:26px}
 """
 
 JS = """
+function moreList(b){const l=b.previousElementSibling;if(l)l.classList.add('open');b.remove();}
 (function(){function chk(){fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{
  if(v&&v.build&&v.build!==BUILD){const u=new URL(location.href);if(u.searchParams.get('v')===v.build)return;
  u.searchParams.set('v',v.build);location.replace(u.toString());}}).catch(()=>{});}
