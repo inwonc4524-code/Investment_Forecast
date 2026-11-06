@@ -31,7 +31,7 @@ LONG_SHOW = 10               # '오래 꾸준히' 목록에 보여줄 개수
 MIN_DAYS = 220               # 이보다 데이터가 짧으면(상장 1년 미만 등) 제외
 PERIODS = ["1d", "1w", "1m", 1, 3, 5, 10, 20]  # '오래 꾸준히' 기간
 PERIOD_INFO = {   # 기간: (버튼 이름, 칸 하나의 단위, 세는 말, 기간 이름)
-    "1d": ("1일", "날", "일", "1일"), "1w": ("1주", "날", "일", "1주"), "1m": ("1달", "날", "일", "1달"),
+    "1d": ("1일", "시간", "시간", "1일"), "1w": ("1주", "날", "일", "1주"), "1m": ("1달", "주", "주", "1달"),
     1: ("1년", "달", "달", "1년"), 3: ("3년", "해", "번", "3년"), 5: ("5년", "해", "번", "5년"),
     10: ("10년", "해", "번", "10년"), 20: ("20년", "해", "번", "20년"),
 }
@@ -64,6 +64,70 @@ def _pick(raw, key, name):
     if len(real):
         RAW[name] = real
     return adj
+
+
+INTRA = {}   # 1일: 마지막 장날의 1시간 단위 가격 {"date", "open", "close": [...], "times": [...]}
+
+
+def fetch_intraday(tickers):
+    """마지막 장날, 장 시작부터 마감까지 1시간마다 가격"""
+    import yfinance as yf
+    try:
+        raw = yf.download(tickers, period="5d", interval="60m", auto_adjust=False,
+                          progress=False, group_by="ticker", threads=True, prepost=False)
+    except Exception as e:
+        print("시간별 가격을 못 받았어요:", e)
+        return
+    for t in tickers:
+        try:
+            d = raw[t] if isinstance(raw.columns, pd.MultiIndex) else raw
+            d = d.dropna(subset=["Open", "Close"])
+            d = d[d.Close > 0]
+            if d.empty:
+                continue
+            days = [x.date() for x in d.index]
+            last = days[-1]
+            day = d[[x == last for x in days]]
+            INTRA[t] = {"date": pd.Timestamp(last), "open": float(day.Open.iloc[0]),
+                        "close": [float(x) for x in day.Close], "times": list(day.index)}
+        except Exception:
+            pass
+    print(f"시간별 가격을 받은 곳: {len(INTRA)}/{len(tickers)}")
+
+
+def demo_intraday(closes, seed=3):
+    rng = np.random.default_rng(seed)
+    for t, s in closes.items():
+        o = float(s.iloc[-2])
+        moves = rng.normal(0, 0.006, 7)
+        cl = list(o * np.exp(np.cumsum(moves)))
+        start = pd.Timestamp(s.index[-1]) + pd.Timedelta(hours=9)
+        INTRA[t] = {"date": pd.Timestamp(s.index[-1]), "open": o, "close": cl,
+                    "times": [start + pd.Timedelta(hours=h) for h in range(7)]}
+
+
+def apply_intraday(df):
+    """1일 = 그 나라 장 시작 → 장 마감 (시간별 가격이 없으면 전날 마감 대비)"""
+    def one(r):
+        it = INTRA.get(r.ticker)
+        if it and it["date"].strftime("%Y-%m-%d") == r.date:
+            return it["close"][-1] / it["open"] - 1
+        return r.r1d
+    df["r1d"] = df.apply(one, axis=1)
+    return df
+
+
+def intraday_term(ticker):
+    it = INTRA.get(ticker)
+    if not it:
+        return None
+    o, cl = it["open"], it["close"]
+    prev = [o] + cl[:-1]
+    blocks = [c / p - 1 for c, p in zip(cl, prev)]
+    labels = [f"{t:%H:%M}부터 1시간" for t in it["times"]]
+    return {"total": cl[-1] / o - 1, "cagr": np.nan, "blocks": blocks, "labels": labels,
+            "ups": sum(b > 0 for b in blocks), "start": it["date"], "end": it["date"],
+            "p0": o, "p1": cl[-1]}
 
 
 def fetch_prices(tickers):
@@ -130,6 +194,14 @@ def ret(s, days):
     return float(s.iloc[-1] / s.iloc[-1 - days] - 1) if len(s) > days else np.nan
 
 
+def ret_days(s, days):
+    """달력으로 며칠 전 마감 가격과 비교 (1주=7일, 1달=4주=28일)"""
+    start = s.index[-1] - pd.Timedelta(days=days)
+    if s.index[0] > start:
+        return np.nan
+    return float(s.iloc[-1] / s.asof(start) - 1)
+
+
 def indicators(s):
     s = s.dropna()
     last_year = s.iloc[-252:]
@@ -141,8 +213,8 @@ def indicators(s):
         "date": s.index[-1].strftime("%Y-%m-%d"),
         "since": s.index[0].strftime("%Y-%m-%d"),
         "r1d": ret(s, 1),
-        "r1w": ret(s, 5),
-        "r1m": ret(s, 21),
+        "r1w": ret_days(s, 7),
+        "r1m": ret_days(s, 28),
         "r3m": ret(s, 63),
         "r6m": ret(s, 126),
         "r12m": ret(s, 252),
@@ -189,16 +261,34 @@ def long_term(s, years):
     """기간 동안의 성적. 데이터가 모자라면 None.
     1주·1달: 하루씩, 1년: 12달을 한 달씩, 3년 이상: 1년씩 잘라서 몇 번 올랐는지 셉니다."""
     end = s.index[-1]
-    if years in ("1d", "1w", "1m"):
-        n = {"1d": 1, "1w": 5, "1m": 21}[years]
-        if len(s) < n + 1:
+    if years == "1w":   # 달력 7일, 하루씩 (장이 쉰 날은 None)
+        if len(s) < 8:
             return None
-        w = s.iloc[-(n + 1):]
-        blocks = list((w / w.shift(1) - 1).iloc[1:])
-        total = float(w.iloc[-1] / w.iloc[0] - 1)
-        return {"total": total, "cagr": np.nan, "blocks": blocks, "start": w.index[0],
-                "labels": [d.strftime("%m월 %d일") for d in w.index[1:]], "end": w.index[-1],
-                "ups": sum(b > 0 for b in blocks)}
+        days = [end - pd.Timedelta(days=k) for k in range(6, -1, -1)]
+        blocks, labels = [], []
+        for d in days:
+            wd = "월화수목금토일"[d.weekday()]
+            labels.append(f"{d.month}월 {d.day}일 ({wd})")
+            if d in s.index:
+                prev = s[s.index < d]
+                blocks.append(float(s[d] / prev.iloc[-1] - 1) if len(prev) else None)
+            else:
+                blocks.append(None)
+        start = end - pd.Timedelta(days=7)
+        total = float(s.iloc[-1] / s.asof(start) - 1)
+        return {"total": total, "cagr": np.nan, "blocks": blocks, "start": start, "end": end,
+                "labels": labels, "ups": sum(1 for b in blocks if b is not None and b > 0)}
+    if years == "1m":   # 4주, 일주일씩
+        start = end - pd.Timedelta(days=28)
+        if s.index[0] > start:
+            return None
+        cuts = [end - pd.Timedelta(days=7 * k) for k in range(4, -1, -1)]
+        px = [float(s.asof(c)) for c in cuts]
+        blocks = [px[i + 1] / px[i] - 1 for i in range(4)]
+        labels = [f"{(a + pd.Timedelta(days=1)).month}/{(a + pd.Timedelta(days=1)).day}~{b.month}/{b.day}"
+                  for a, b in zip(cuts[:-1], cuts[1:])]
+        return {"total": px[-1] / px[0] - 1, "cagr": np.nan, "blocks": blocks, "start": start,
+                "end": end, "labels": labels, "ups": sum(b > 0 for b in blocks)}
     start = end - pd.DateOffset(years=years)
     if s.index[0] > start + pd.Timedelta(days=15):
         return None
@@ -230,10 +320,10 @@ def build_long(universe, closes):
             s = closes.get(u.ticker)
             if s is None or s.empty:
                 continue
-            lt = long_term(s.dropna(), y)
+            lt = intraday_term(u.ticker) if y == "1d" else long_term(s.dropna(), y)
             if lt:
                 real = RAW.get(u.ticker)
-                if real is not None and len(real):
+                if y != "1d" and real is not None and len(real):
                     lt["p0"] = float(real.asof(lt["start"])) if real.index[0] <= lt["start"] else np.nan
                     lt["p1"] = float(real.iloc[-1])
                 rows.append({**u.to_dict(), **lt})
@@ -244,7 +334,7 @@ def build_long(universe, closes):
 def long_rank(rows):
     """올라간 횟수가 많은 순 → 같으면 1년 평균 수익률 높은 순. 전체로 손해 본 건 제외."""
     good = [r for r in rows if r["total"] > 0]
-    return sorted(good, key=lambda r: (r["ups"] / len(r["blocks"]),
+    return sorted(good, key=lambda r: (r["ups"] / max(1, sum(b is not None for b in r["blocks"])),
                                        r["total"] if pd.isna(r["cagr"]) else r["cagr"]), reverse=True)
 
 
@@ -382,7 +472,7 @@ def close_message(df, market, today):
     if up.empty:
         out.append("오늘은 오른 곳이 없어요. 다 같이 쉬는 날이에요 🛌")
     else:
-        out.append("🔝 오늘 하루 많이 오른 순서")
+        out.append("🔝 오늘 장 시작부터 마감까지 많이 오른 순서")
         for i, (_, r) in enumerate(up.head(5).iterrows(), 1):
             out.append(f"{i}. {r['name']} {pct(r.r1d)}" + (f"  ({theme_names(r)})" if theme_names(r) else ""))
     down = sub[sub.r1d < 0].tail(1)
@@ -497,7 +587,7 @@ def day_text(r):
     """1일: 어느 날 장 마감 기준인지"""
     m = r["market"]
     d = pd.Timestamp(r["end"])
-    return f"{MKT_NAME.get(m, '')} {d.month}월 {d.day}일 장 마감 기준 (하루 동안)"
+    return f"{MKT_NAME.get(m, '')} {d.month}월 {d.day}일 장 시작부터 마감까지"
 
 
 def why_html(text):
@@ -513,11 +603,13 @@ def long_panel(rows, years):
     items = []
     for i, r in enumerate(ranked[:LONG_SHOW], 1):
         boxes = "".join(
-            f"<span class='bx {'u' if b > 0 else 'd'}' title='{E(lb)}: {pct(b)}'></span>"
+            (f"<span class='bx n' title='{E(lb)}: 장이 쉬었어요'></span>" if b is None else
+             f"<span class='bx {'u' if b > 0 else 'd' if b < 0 else 'n'}' title='{E(lb)}: {pct(b)}'></span>")
             for b, lb in zip(r["blocks"], r["labels"]))
         medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}")
         ups = r["ups"]
-        count_text = day_text(r) if years == "1d" else f"{len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요" + (
+        rest = sum(b is None for b in r["blocks"])
+        count_text = day_text(r) + f" · {len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요" if years == "1d" else f"{len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요" + (f" ({rest}{cnt}은 장이 쉬었어요)" if rest else "") + (
             " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else "")
         n_blocks = len(r["blocks"])
         avg = " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else ""
@@ -533,8 +625,8 @@ def long_panel(rows, years):
             f"<small>{updown(r['total'])}</small></div></li>")
     lost = len(rows) - len(ranked)
     note = f"이 기간 동안 가격이 내려간 ETF {lost}개는 뺐어요. " if lost else ""
-    return (f"<p class='how'>🟥 = 그 {unit}에 올랐어요 &nbsp; 🟦 = 그 {unit}에 내렸어요 "
-            f"(칸을 누르고 있으면 날짜가 보여요)<br>1일은 나라마다 그 나라 주식시장이 끝난 시각 기준이에요 (한국 오후 3:30 · 중국 오후 4시 · 홍콩 오후 5시 · 미국 아침 6시, 한국시간)<br>💬 = 그 기간에 왜 올랐는지 Claude가 뉴스를 보고 짧게 정리한 거예요 (틀릴 수 있어요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
+    return (f"<p class='how'>🟥 = 그 {unit}에 올랐어요 &nbsp; 🟦 = 그 {unit}에 내렸어요 &nbsp; ⬜ = 장이 쉬었어요 "
+            f"(칸을 누르고 있으면 날짜가 보여요)<br>1일 = 그 나라 장 시작부터 마감까지 1시간씩 · 1주 = 7일 · 1달 = 4주 · 1년 = 12달. 마감 시각은 나라마다 달라요 (한국 오후 3:30 · 중국 오후 4시 · 홍콩 오후 5시 · 미국 아침 6시, 한국시간)<br>💬 = 그 기간에 왜 올랐는지 Claude가 뉴스를 보고 짧게 정리한 거예요 (틀릴 수 있어요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
             f"<ol class='longlist'>{''.join(items) or '<li class=empty>여기에 맞는 ETF가 없어요</li>'}</ol>")
 
 
@@ -571,7 +663,7 @@ th:nth-child(-n+2),td:nth-child(-n+2){text-align:left}
 .longlist{list-style:none;padding:0;background:var(--card);border:1px solid var(--line);border-radius:16px}
 .lt{padding:12px 14px;align-items:center}.rk{width:30px;flex:0 0 30px;font-size:18px;font-weight:700;text-align:center}
 .lb{flex:1;min-width:0;gap:2px}.lb .boxes{display:flex;flex-direction:row;flex-wrap:wrap;gap:3px;margin:5px 0 3px}
-.bx{width:14px;height:14px;border-radius:3px;display:inline-block}.bx.u{background:var(--up)}.bx.d{background:var(--down)}
+.bx{width:14px;height:14px;border-radius:3px;display:inline-block}.bx.u{background:var(--up)}.bx.d{background:var(--down)}.bx.n{background:var(--line)}
 .sm{font-size:13px;color:var(--sub)}.sm b{color:var(--fg)}
 .why{display:block;font-size:13px;line-height:1.5;color:var(--fg);background:var(--soft);border-radius:8px;padding:6px 9px;margin-top:6px}
 .won{text-align:right;flex:0 0 auto;display:flex;flex-direction:column}.won b{font-size:17px}.won small{font-size:11px;color:var(--sub)}
@@ -682,7 +774,9 @@ def main():
     tickers = universe.ticker.tolist()
     closes = demo_prices(tickers) if args.demo else fetch_prices(tickers)
 
+    (demo_intraday(closes) if args.demo else fetch_intraday(tickers))
     df = build_table(universe, closes)
+    df = apply_intraday(df)
     long = build_long(universe, closes)
     today = datetime.now(KST).strftime("%Y-%m-%d")
 
