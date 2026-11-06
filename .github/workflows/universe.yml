@@ -1,0 +1,47 @@
+name: ETF 목록 자동 업데이트 (매달)
+
+on:
+  schedule:
+    # 매달 1일 한국시간 오전 9시 17분 — 순위 안에 새로 들어온 곳을 목록에 더해요
+    - cron: "17 0 1 * *"
+  workflow_dispatch: {}   # Actions 화면에서 "Run workflow" 버튼으로 바로 실행
+  push:                   # 업데이트 규칙을 고치면 바로 한 번 실행
+    branches: [main]
+    paths: ["update_universe.py", ".github/workflows/universe.yml"]
+
+concurrency:
+  group: bot
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt lxml
+
+      - name: 순위 받아와서 목록에 더하기
+        run: python update_universe.py
+
+      - name: 늘어난 목록으로 대시보드 다시 만들기 (알림은 안 보냄)
+        env:
+          SKIP_ALERT: "1"
+        run: python etf_bot.py
+
+      - name: 저장
+        run: |
+          git config user.name "universe-bot"
+          git config user.email "universe-bot@users.noreply.github.com"
+          git add etfs.csv docs
+          git commit -m "ETF 목록 자동 업데이트 $(TZ=Asia/Seoul date +%F)" || echo "변경 없음"
+          git pull --rebase origin main && git push

@@ -866,7 +866,7 @@ def main():
         url = f"https://{owner}.github.io/{name}/"
     if url:   # 알림에서 열 때 예전에 저장된 화면 대신 항상 새 화면이 나오게
         url = f"{url}{'&' if '?' in url else '?'}v={build}"
-    if os.environ.get("GITHUB_EVENT_NAME") == "push":
+    if os.environ.get("GITHUB_EVENT_NAME") == "push" or os.environ.get("SKIP_ALERT"):
         print("코드·이유 파일을 고쳐서 다시 만든 거라 알림은 보내지 않아요.")
     elif not args.demo:
         if close:
