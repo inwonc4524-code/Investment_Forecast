@@ -397,8 +397,7 @@ def long_panel(rows, years):
 
 
 CSS = """
-:root{--bg:#f6f7f9;--fg:#1c1f24;--sub:#6b7280;--card:#fff;--line:#e5e7eb;--up:#e03131;--down:#1c7ed6;--acc:#0f766e;--soft:#eef6f5}
-@media (prefers-color-scheme:dark){:root{--bg:#111316;--fg:#e8eaed;--sub:#9aa0a6;--card:#1b1e22;--line:#2c3036;--up:#ff6b6b;--down:#4dabf7;--acc:#2dd4bf;--soft:#16302d}}
+:root{color-scheme:dark;--bg:#111316;--fg:#e8eaed;--sub:#9aa0a6;--card:#1b1e22;--line:#2c3036;--up:#ff6b6b;--down:#4dabf7;--acc:#2dd4bf;--soft:#16302d}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:var(--bg);color:var(--fg);-webkit-text-size-adjust:100%}
 header{padding:22px 16px 6px;max-width:1100px;margin:auto}h1{font-size:23px;margin:0 0 4px}header p{color:var(--sub);margin:0;font-size:13px}
 .guide{max-width:1100px;margin:10px auto 0;padding:0 16px}
@@ -408,7 +407,7 @@ header{padding:22px 16px 6px;max-width:1100px;margin:auto}h1{font-size:23px;marg
 .row{display:flex;gap:5px}
 .row button{flex:1 1 0;min-width:0;letter-spacing:-.2px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:8px 4px;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}
 .row.big button{font-size:15px;font-weight:700;padding:11px 4px;border-radius:12px}
-.row button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.row button.on{background:var(--acc);border-color:var(--acc);color:#042f2a}
 main{max-width:1100px;margin:auto;padding:8px 16px 40px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
@@ -497,6 +496,7 @@ def dashboard(df, long, today, demo):
     return f"""<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark"><meta name="theme-color" content="#111316">
 <title>ETF 추천 대시보드</title><style>{CSS}</style></head><body>{banner}
 <header><h1>📊 오늘의 ETF 추천</h1><p>{today} 업데이트 · {counts} ETF를 살펴봤어요</p></header>
 {guide}
