@@ -162,23 +162,39 @@ def pct(x):
     return "-" if pd.isna(x) else f"{x * 100:+.1f}%"
 
 
-def phone_message(p, today):
-    def line(r, extra):
-        flag = " 🔥과열" if r.overheated else ""
-        return f"· {r['name']} ({r.ticker.replace('.KS', '')}) {extra}{flag}"
+MARKETS = [("KR", "🇰🇷 한국"), ("US", "🇺🇸 미국"), ("CN", "🇨🇳 중국"), ("HK", "🇭🇰 홍콩")]
+
+
+def short_ticker(t):
+    return t.split(".")[0]
+
+
+def phone_message(df, today):
+    """시장별로 종합 1위 + 상승·반등·안정 각 1위를 한 줄씩."""
+    def first(rows):
+        return None if rows.empty else rows.iloc[0]
 
     out = [f"📅 {today} 기준"]
-    out.append("\n🏆 종합 TOP")
-    out += [line(r, f"3개월 {pct(r.r3m)}") for _, r in p["overall"].head(3).iterrows()]
-    out.append("\n📈 상승 흐름")
-    out += [line(r, f"6개월 {pct(r.r6m)}") for _, r in p["momentum"].iterrows()]
-    out.append("\n🔄 반등 후보")
-    if p["rebound"].empty:
-        out.append("· 오늘은 조건에 맞는 종목 없음")
-    out += [line(r, f"고점대비 {pct(r.from_high)}") for _, r in p["rebound"].iterrows()]
-    out.append("\n🛡 안정형")
-    out += [line(r, f"변동성 {r.vol60 * 100:.0f}%") for _, r in p["stable"].iterrows()]
-    out.append("\n※ 과거 가격 기반 참고용, 투자 권유 아님")
+    for code, label in MARKETS:
+        sub = df[df.market == code]
+        if sub.empty:
+            continue
+        p = picks(sub)
+        out.append(f"\n{label}")
+        for icon, key, extra in [
+            ("🏆", "overall", lambda r: f"3개월 {pct(r.r3m)}"),
+            ("📈", "momentum", lambda r: f"6개월 {pct(r.r6m)}"),
+            ("🔄", "rebound", lambda r: f"고점대비 {pct(r.from_high)}"),
+            ("🛡", "stable", lambda r: f"변동성 {r.vol60 * 100:.0f}%"),
+        ]:
+            r = first(p[key])
+            if r is None:
+                out.append(f"{icon} 해당 없음")
+            else:
+                flag = " 🔥과열" if r.overheated else ""
+                out.append(f"{icon} {r['name']} ({short_ticker(r.ticker)}) {extra(r)}{flag}")
+    out.append("\n🏆종합 📈상승 🔄반등 🛡안정 · 전체 순위는 대시보드에서")
+    out.append("※ 과거 가격 기반 참고용, 투자 권유 아님")
     return "\n".join(out)
 
 
@@ -209,7 +225,9 @@ def card(title, desc, rows, metric_fn):
     return f"<section class='card'><h2>{title}</h2><p>{desc}</p><ol>{items}</ol></section>"
 
 
-def dashboard(df, p, today, demo):
+def panel(sub, key):
+    """한 탭(시장)의 카드 4개 + 표."""
+    p = picks(sub)
     cols = [("name", "이름"), ("market", "시장"), ("category", "분류"),
             ("r1m", "1개월"), ("r3m", "3개월"), ("r6m", "6개월"), ("r12m", "1년"),
             ("rsi14", "RSI"), ("vol60", "변동성"), ("mdd1y", "최대낙폭"),
@@ -228,9 +246,9 @@ def dashboard(df, p, today, demo):
         return f"<td>{html.escape(str(v))}</td>"
 
     body = "".join("<tr>" + "".join(cell(c, r[c]) for c, _ in cols) + "</tr>"
-                   for _, r in df.sort_values("total", ascending=False).iterrows())
-    head = "".join(f"<th onclick='sortBy({i})'>{n}</th>" for i, (_, n) in enumerate(cols))
-    banner = "<div class='demo'>⚠ 가짜(데모) 데이터로 만든 미리보기입니다</div>" if demo else ""
+                   for _, r in sub.sort_values("total", ascending=False).iterrows())
+    head = "".join(f"<th onclick=\"sortBy('t-{key}',{i})\">{n}</th>"
+                   for i, (_, n) in enumerate(cols))
 
     cards = (
         card("🏆 종합 TOP 5", "상승 흐름과 안정성을 합친 점수 (과열 종목 감점)",
@@ -242,6 +260,22 @@ def dashboard(df, p, today, demo):
         card("🛡 안정형", "출렁임(변동성)과 최대 낙폭이 작고 6개월 수익이 플러스인 ETF",
              p["stable"], lambda r: f"변동성 {r.vol60 * 100:.0f}%")
     )
+    return (f"<div class='panel' id='p-{key}'><div class='grid'>{cards}</div>"
+            f"<h3>ETF 표 <span class='hint'>(제목을 누르면 정렬)</span></h3>"
+            f"<div class='tbl'><table id='t-{key}'><thead><tr>{head}</tr></thead>"
+            f"<tbody>{body}</tbody></table></div></div>")
+
+
+def dashboard(df, today, demo):
+    banner = "<div class='demo'>⚠ 가짜(데모) 데이터로 만든 미리보기입니다</div>" if demo else ""
+    tabs_def = [("all", "전체", df)] + [
+        (code.lower(), label, df[df.market == code]) for code, label in MARKETS]
+    tabs_def = [t for t in tabs_def if not t[2].empty]
+    tabs = "".join(f"<button data-k='{k}' onclick=\"showTab('{k}')\">{label}"
+                   f"<small>{len(sub)}</small></button>" for k, label, sub in tabs_def)
+    panels = "".join(panel(sub, k) for k, _, sub in tabs_def)
+    counts = " · ".join(f"{label.split()[-1]} {int((df.market == c).sum())}개"
+                        for c, label in MARKETS if (df.market == c).any())
 
     return f"""<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8">
@@ -268,21 +302,32 @@ th{{cursor:pointer;color:var(--sub);font-weight:600;position:sticky;top:0;backgr
 th:nth-child(-n+3),td:nth-child(-n+3){{text-align:left}}.up{{color:var(--up)}}.down{{color:var(--down)}}
 .demo{{background:#f59e0b;color:#111;padding:8px 20px;text-align:center;font-weight:600}}
 footer{{color:var(--sub);font-size:12px;line-height:1.6;margin-top:24px}}
+.hint{{font-weight:400;font-size:12px;color:var(--sub)}}
+.tabs{{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:5px;padding:10px 20px;max-width:1100px;margin:auto}}
+.tabs button{{flex:1 1 0;min-width:0;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:8px 4px;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}}
+@media (max-width:480px){{.tabs{{padding:10px 12px}}.tabs button small{{display:none}}}}
+.tabs button small{{margin-left:5px;color:var(--sub);font-size:11px}}
+.tabs button.on{{background:var(--acc);border-color:var(--acc);color:#fff}}.tabs button.on small{{color:#ffffffcc}}
+.panel{{display:none}}.panel.on{{display:block}}
 </style></head><body>{banner}
-<header><h1>📊 오늘의 ETF 추천</h1><p>{today} 업데이트 · 한국 {int((df.market == 'KR').sum())}개 + 미국 {int((df.market == 'US').sum())}개 ETF 분석</p></header>
-<main><div class="grid">{cards}</div>
-<h3>전체 ETF 표 <span style="font-weight:400;font-size:12px;color:var(--sub)">(제목을 누르면 정렬)</span></h3>
-<div class="tbl"><table id="t"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>
+<header><h1>📊 오늘의 ETF 추천</h1><p>{today} 업데이트 · {counts} ETF 분석</p></header>
+<nav class="tabs">{tabs}</nav>
+<main>{panels}
 <footer>
 <b>용어</b> · RSI: 최근 14일 동안 얼마나 올랐/내렸는지(30 아래면 많이 빠진 상태, 70 위면 과열) ·
 변동성: 1년 기준으로 환산한 출렁임 크기 · 최대낙폭: 최근 1년 중 고점에서 가장 많이 빠졌던 폭<br>
 ⚠ 이 페이지는 과거 가격으로 계산한 참고 지표이며 투자 권유가 아닙니다. 실제 투자 판단과 책임은 본인에게 있습니다.
 </footer></main>
 <script>
-let dir={{}};function sortBy(i){{const tb=document.querySelector('#t tbody');const rows=[...tb.rows];dir[i]=!dir[i];
+let dir={{}};function sortBy(id,i){{const tb=document.querySelector('#'+id+' tbody');const rows=[...tb.rows];const k=id+i;dir[k]=!dir[k];
 rows.sort((a,b)=>{{const x=a.cells[i],y=b.cells[i];const vx=x.dataset.v??x.textContent,vy=y.dataset.v??y.textContent;
-const nx=parseFloat(vx),ny=parseFloat(vy);const c=isNaN(nx)?String(vx).localeCompare(vy,'ko'):nx-ny;return dir[i]?-c:c;}});
+const nx=parseFloat(vx),ny=parseFloat(vy);const c=isNaN(nx)?String(vx).localeCompare(vy,'ko'):nx-ny;return dir[k]?-c:c;}});
 rows.forEach(r=>tb.appendChild(r));}}
+function showTab(k){{if(!document.getElementById('p-'+k))k='all';
+document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+k));
+document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+history.replaceState(null,'','#'+k);}}
+showTab(location.hash.slice(1)||'all');
 </script></body></html>"""
 
 
@@ -298,15 +343,14 @@ def main():
     closes = demo_prices(tickers) if args.demo else fetch_prices(tickers)
 
     df = build_table(universe, closes)
-    p = picks(df)
     today = datetime.now(KST).strftime("%Y-%m-%d")
 
     os.makedirs(DOCS, exist_ok=True)
     with open(os.path.join(DOCS, "index.html"), "w", encoding="utf-8") as f:
-        f.write(dashboard(df, p, today, args.demo))
+        f.write(dashboard(df, today, args.demo))
     df.to_csv(os.path.join(DOCS, "latest.csv"), index=False, encoding="utf-8-sig")
 
-    msg = phone_message(p, today)
+    msg = phone_message(df, today)
     print(msg)
 
     url = os.environ.get("DASHBOARD_URL")
