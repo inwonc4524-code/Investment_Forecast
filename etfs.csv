@@ -142,14 +142,12 @@ KWEB,KraneShares 중국 인터넷,US,중국 인터넷,tech|world
 310970.KS,TIGER MSCI Korea TR,KR,국내 시장지수 (시총 21위),
 367380.KS,ACE 미국나스닥100,KR,해외 주식 (시총 22위),tech
 395160.KS,KODEX AI반도체TOP2플러스,KR,국내 업종·테마 (시총 23위),semi
-481050.KS,KODEX CD1년금리플러스액티브(합성),KR,채권 (시총 24위),
 102780.KS,KODEX 삼성그룹,KR,국내 업종·테마 (시총 25위),
 486290.KS,TIGER 미국나스닥100타겟데일리커버드콜,KR,해외 주식 (시총 26위),tech|div
 395270.KS,HANARO Fn K-반도체,KR,국내 업종·테마 (시총 27위),semi
 385540.KS,RISE 종합채권(A-이상)액티브,KR,채권 (시총 28위),bond
 472150.KS,TIGER 배당커버드콜액티브,KR,국내 업종·테마 (시총 29위),div
 426030.KS,TIME 미국나스닥100액티브,KR,해외 주식 (시총 31위),tech
-214980.KS,KODEX 단기채권PLUS,KR,채권 (시총 32위),bond
 278540.KS,KODEX MSCI Korea TR,KR,국내 시장지수 (시총 34위),
 441640.KS,KODEX 미국배당커버드콜액티브,KR,해외 주식 (시총 36위),div
 284430.KS,KODEX 200미국채혼합50,KR,채권 (시총 37위),bond
@@ -159,7 +157,6 @@ KWEB,KraneShares 중국 인터넷,US,중국 인터넷,tech|world
 453850.KS,ACE 미국30년국채액티브(H),KR,채권 (시총 42위),bond
 368590.KS,RISE 미국나스닥100,KR,해외 주식 (시총 43위),tech
 105190.KS,ACE 200,KR,국내 시장지수 (시총 44위),
-475630.KS,TIGER CD1년금리액티브(합성),KR,기타 (시총 45위),
 0177N0.KS,KODEX 삼성전자SK하이닉스채권혼합50,KR,기타 (시총 46위),bond
 294400.KS,KIWOOM 200TR,KR,국내 시장지수 (시총 47위),
 292150.KS,TIGER 코리아TOP10,KR,국내 업종·테마 (시총 48위),
@@ -168,9 +165,7 @@ KWEB,KraneShares 중국 인터넷,US,중국 인터넷,tech|world
 436140.KS,SOL 종합채권(AA-이상)액티브,KR,채권 (시총 51위),bond
 446770.KS,ACE 글로벌반도체TOP4 Plus,KR,해외 주식 (시총 52위),semi
 448330.KS,KODEX 삼성전자채권혼합,KR,국내 시장지수 (시총 53위),bond
-469830.KS,SOL 초단기채권액티브,KR,채권 (시총 55위),bond
 356540.KS,ACE 종합채권(AA-이상)액티브,KR,채권 (시총 56위),bond
-0139F0.KS,TIGER 12월자동연장금융채(AA-이상)액티브,KR,채권 (시총 57위),
 152100.KS,PLUS 200,KR,국내 시장지수 (시총 58위),
 0072R0.KS,TIGER KRX금현물,KR,원자재 (시총 59위),gold
 442580.KS,PLUS 글로벌HBM반도체,KR,해외 주식 (시총 60위),semi
@@ -187,16 +182,13 @@ KWEB,KraneShares 중국 인터넷,US,중국 인터넷,tech|world
 466920.KS,SOL 조선TOP3플러스,KR,국내 업종·테마 (시총 73위),defense
 091230.KS,TIGER 반도체,KR,국내 업종·테마 (시총 74위),semi
 445290.KS,KODEX 로봇액티브,KR,국내 업종·테마 (시총 75위),robot
-496020.KS,WON 전단채플러스액티브,KR,채권 (시총 76위),
 498410.KS,KODEX 금융고배당TOP10타겟위클리커버드콜,KR,국내 업종·테마 (시총 77위),div
 455850.KS,SOL AI반도체소부장,KR,국내 업종·테마 (시총 78위),semi
 0007F0.KS,KODEX 27-12 회사채(AA-이상)액티브,KR,채권 (시총 79위),bond
 0183J0.KS,TIGER 미국우주테크,KR,해외 주식 (시총 80위),tech
 497570.KS,TIGER 미국필라델피아AI반도체나스닥,KR,해외 주식 (시총 81위),semi|tech
-272580.KS,TIGER 단기채권액티브,KR,채권 (시총 83위),bond
 295040.KS,SOL 200TR,KR,국내 시장지수 (시총 84위),
 476550.KS,TIGER 미국30년국채커버드콜액티브(H),KR,채권 (시총 85위),div|bond
-329750.KS,TIGER 미국달러단기채권액티브,KR,채권 (시총 86위),bond
 0025N0.KS,TIGER TDF2045 적격,KR,기타 (시총 87위),
 0117L0.KS,KODEX 26-12 금융채(AA-이상)액티브,KR,채권 (시총 88위),
 481060.KS,KODEX 미국30년국채타겟커버드콜(합성 H),KR,채권 (시총 89위),div|bond
@@ -223,7 +215,6 @@ IEMG,iShares Core MSCI Emerging Markets ETF,US,Diversified Emerging Mkts,world
 BNDX,Vanguard Total International Bond Index Fund ETF Shares,US,Global Bond-USD Hedged,bond|world
 IJH,iShares Core S&P Mid-Cap ETF,US,Mid-Cap Blend,
 IWF,iShares Russell 1000 Growth ETF,US,Large Growth,
-SGOV,iShares 0-3 Month Treasury Bond ETF,US,Ultrashort Bond,bond
 QQQM,Invesco NASDAQ 100 ETF,US,Large Growth,tech
 IJR,iShares Core S&P Small-Cap ETF,US,Small Blend,
 VT,Vanguard Total World Stock Index Fund ETF Shares,US,Global Large-Stock Blend,
@@ -237,7 +228,6 @@ EFA,iShares MSCI EAFE ETF,US,Foreign Large Blend,world
 VV,Vanguard Morningstar Large-Cap ETF,US,Large Blend,
 IVW,iShares S&P 500 Growth ETF,US,Large Growth,sp500
 SCHX,Schwab U.S. Large-Cap ETF,US,Large Blend,
-BSV,Vanguard Short-Term Bond Index Fund ETF Shares,US,Short-Term Bond,bond
 VCIT,Vanguard Intermediate-Term Corporate Bond Index Fund ETF Shares,US,Corporate Bond,bond
 SCHF,Schwab International Equity ETF,US,Foreign Large Blend,world
 VBR,Vanguard Morningstar Small-Cap Value ETF,US,Small Value,
@@ -248,21 +238,17 @@ IXUS,iShares Core MSCI Total International Stock ETF,US,Foreign Large Blend,worl
 VTEB,Vanguard Tax-Exempt Bond Index Fund ETF Shares,US,Muni National Interm,bond
 MUB,iShares National Muni Bond ETF,US,Muni National Interm,bond
 SPYG,State Street SPDR Portfolio S&P 500 Growth ETF,US,Large Growth,sp500
-VCSH,Vanguard Short-Term Corporate Bond Index Fund ETF Shares,US,Short-Term Bond,bond
 BIV,Vanguard Intermediate-Term Bond Index Fund ETF Shares,US,Intermediate Core Bond,bond
 IVE,iShares S&P 500 Value ETF,US,Large Value,sp500
 IUSB,iShares Core Universal USD Bond ETF,US,Intermediate Core-Plus Bond,bond
 VGIT,Vanguard Intermediate-Term Treasury Index Fund ETF Shares,US,Intermediate Government,bond
-BIL,State Street SPDR Bloomberg 1-3 Month T-Bill ETF,US,Ultrashort Bond,bond
 QUAL,iShares MSCI USA Quality Factor ETF,US,Large Blend,
 IWB,iShares Russell 1000 ETF,US,Large Blend,
 SCHB,Schwab U.S. Broad Market ETF,US,Large Blend,
 GOVT,iShares U.S. Treasury Bond ETF,US,Intermediate Government,bond
-JPST,JPMorgan Ultra-Short Income ETF,US,Ultrashort Bond,div|bond
 JEPQ,JPMorgan Nasdaq Equity Premium Income ETF,US,Derivative Income,tech|div
 VBK,Vanguard Morningstar Small-Cap Growth ETF,US,Small Growth,
 DYNF,iShares U.S. Equity Factor Rotation Active ETF,US,Large Blend,
-VGSH,Vanguard Short-Term Treasury Index Fund ETF Shares,US,Short Government,bond
 SPDW,State Street SPDR Portfolio Developed World ex-US ETF,US,Foreign Large Blend,world
 VOE,Vanguard Morningstar Mid-Cap Value ETF,US,Mid-Cap Value,
 SPYV,State Street SPDR Portfolio S&P 500 Value ETF,US,Large Value,sp500

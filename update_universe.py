@@ -25,7 +25,8 @@ US_TOP = 100
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     "(KHTML, like Gecko) Chrome/130.0 Safari/537.36"}
 
-SKIP = re.compile(r"레버리지|인버스|2X|3X|곱버스|CD금리|KOFR|머니마켓|단기자금|MMF|SOFR|단기통안채",
+SKIP = re.compile(r"레버리지|인버스|2X|3X|곱버스|CD\S*금리|KOFR|SOFR|머니마켓|MMF|단기자금|전단채|초단기|자동연장|"
+                  r"단기통안채|단기채권|금리액티브|Ultra|Leveraged|Inverse|Bear|Short|T-?Bill|0-3 Month|1-3 Month",
                   re.I)
 
 # 미국 ETF 후보 (레버리지·인버스 제외) — 이 중에서 운용자산 상위 100개를 골라요
