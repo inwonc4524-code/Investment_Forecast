@@ -226,7 +226,7 @@ def build_table(universe, closes):
 def picks(df):
     return {
         "overall": df[df.above_ma200].nlargest(5, "total"),
-        "momentum": df[df.above_ma200].nlargest(TOP_N, "mom_score"),
+        "momentum": df[df.above_ma200 & (df.mom_raw > 0)].nlargest(TOP_N, "mom_score"),
         "rebound": df[df.rebound_ok].nlargest(TOP_N, "rebound_score"),
         "stable": df[df.stab_ok].nlargest(TOP_N, "stab_score"),
     }
