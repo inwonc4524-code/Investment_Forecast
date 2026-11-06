@@ -397,8 +397,9 @@ def long_panel(rows, years):
 
 
 CSS = """
-:root{color-scheme:dark;--bg:#111316;--fg:#e8eaed;--sub:#9aa0a6;--card:#1b1e22;--line:#2c3036;--up:#ff6b6b;--down:#4dabf7;--acc:#2dd4bf;--soft:#16302d}
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:var(--bg);color:var(--fg);-webkit-text-size-adjust:100%}
+@font-face{font-family:'ChosunIlboMyungjo';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/Chosunilbo_myungjo.woff') format('woff');font-weight:normal;font-display:swap}
+:root{color-scheme:dark;--bg:#262624;--fg:#faf9f5;--sub:#a6a39a;--card:#30302e;--line:#3e3e3a;--up:#ff7b6b;--down:#6cb6ff;--acc:#d97757;--soft:#3a3a37}
+*{box-sizing:border-box}body{margin:0;font-family:'ChosunIlboMyungjo',Georgia,"Noto Serif KR",serif;-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--fg);-webkit-text-size-adjust:100%}
 header{padding:22px 16px 6px;max-width:1100px;margin:auto}h1{font-size:23px;margin:0 0 4px}header p{color:var(--sub);margin:0;font-size:13px}
 .guide{max-width:1100px;margin:10px auto 0;padding:0 16px}
 .guide details{background:var(--soft);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.7}
@@ -407,7 +408,7 @@ header{padding:22px 16px 6px;max-width:1100px;margin:auto}h1{font-size:23px;marg
 .row{display:flex;gap:5px}
 .row button{flex:1 1 0;min-width:0;letter-spacing:-.2px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:8px 4px;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}
 .row.big button{font-size:15px;font-weight:700;padding:11px 4px;border-radius:12px}
-.row button.on{background:var(--acc);border-color:var(--acc);color:#042f2a}
+.row button.on{background:var(--acc);border-color:var(--acc);color:#1f1e1d}
 main{max-width:1100px;margin:auto;padding:8px 16px 40px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
@@ -496,7 +497,7 @@ def dashboard(df, long, today, demo):
     return f"""<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark"><meta name="theme-color" content="#111316">
+<meta name="color-scheme" content="dark"><meta name="theme-color" content="#262624">
 <title>ETF 추천 대시보드</title><style>{CSS}</style></head><body>{banner}
 <header><h1>📊 오늘의 ETF 추천</h1><p>{today} 업데이트 · {counts} ETF를 살펴봤어요</p></header>
 {guide}
