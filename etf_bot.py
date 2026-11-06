@@ -29,7 +29,12 @@ DOCS = os.path.join(HERE, "docs")
 TOP_N = 3                    # '요즘 추천' 카드마다 보여줄 개수
 LONG_SHOW = 10               # '오래 꾸준히' 목록에 보여줄 개수
 MIN_DAYS = 220               # 이보다 데이터가 짧으면(상장 1년 미만 등) 제외
-PERIODS = [1, 3, 5, 10, 20]  # '오래 꾸준히' 기간(년)
+PERIODS = ["1w", "1m", 1, 3, 5, 10, 20]  # '오래 꾸준히' 기간
+PERIOD_INFO = {   # 기간: (버튼 이름, 칸 하나의 단위, 세는 말, 기간 이름)
+    "1w": ("1주", "날", "일", "1주"), "1m": ("1달", "날", "일", "1달"),
+    1: ("1년", "달", "달", "1년"), 3: ("3년", "해", "번", "3년"), 5: ("5년", "해", "번", "5년"),
+    10: ("10년", "해", "번", "10년"), 20: ("20년", "해", "번", "20년"),
+}
 
 MARKETS = [("KR", "🇰🇷", "한국"), ("US", "🇺🇸", "미국"),
            ("CN", "🇨🇳", "중국"), ("HK", "🇭🇰", "홍콩")]
@@ -103,6 +108,7 @@ def indicators(s):
         "price": float(s.iloc[-1]),
         "date": s.index[-1].strftime("%Y-%m-%d"),
         "since": s.index[0].strftime("%Y-%m-%d"),
+        "r1w": ret(s, 5),
         "r1m": ret(s, 21),
         "r3m": ret(s, 63),
         "r6m": ret(s, 126),
@@ -147,9 +153,19 @@ def score(df):
 # ───────────────────────── 3. 오래 꾸준히 오른 ETF ─────────────────────────
 
 def long_term(s, years):
-    """years 년 동안의 성적. 데이터가 모자라면 None.
-    1년: 12달을 한 달씩, 3년 이상: 1년씩 잘라서 몇 번 올랐는지 셉니다."""
+    """기간 동안의 성적. 데이터가 모자라면 None.
+    1주·1달: 하루씩, 1년: 12달을 한 달씩, 3년 이상: 1년씩 잘라서 몇 번 올랐는지 셉니다."""
     end = s.index[-1]
+    if years in ("1w", "1m"):
+        n = 5 if years == "1w" else 21
+        if len(s) < n + 1:
+            return None
+        w = s.iloc[-(n + 1):]
+        blocks = list((w / w.shift(1) - 1).iloc[1:])
+        total = float(w.iloc[-1] / w.iloc[0] - 1)
+        return {"total": total, "cagr": np.nan, "blocks": blocks,
+                "labels": [d.strftime("%m월 %d일") for d in w.index[1:]],
+                "ups": sum(b > 0 for b in blocks)}
     start = end - pd.DateOffset(years=years)
     if s.index[0] > start + pd.Timedelta(days=15):
         return None
@@ -323,7 +339,7 @@ def recent_panel(sub, mk):
              p["stable"], lambda r: f"흔들림 {shake(r.vol60)}")
     )
 
-    cols = [("name", "이름"), ("category", "종류"), ("r1m", "1달"), ("r3m", "3달"),
+    cols = [("name", "이름"), ("category", "종류"), ("r1w", "1주"), ("r1m", "1달"), ("r3m", "3달"),
             ("r6m", "6달"), ("r12m", "1년"), ("from_high", "최고점보다"),
             ("vol60", "흔들림"), ("total", "점수")]
 
@@ -353,19 +369,18 @@ def recent_panel(sub, mk):
 
 def long_panel(rows, years):
     ranked = long_rank(rows)
-    unit = "달" if years == 1 else "해"
-    n_blocks = 12 if years == 1 else years
+    _, unit, cnt, pname = PERIOD_INFO[years]
     if not rows:
-        return (f"<p class='empty big'>여기엔 {years}년 넘게 된 ETF가 없어요.<br>"
-                f"생긴 지 {years}년이 안 된 ETF는 계산할 수 없어요.</p>")
+        return (f"<p class='empty big'>여기엔 {pname} 넘게 된 ETF가 없어요.<br>"
+                f"생긴 지 {pname}이 안 된 ETF는 계산할 수 없어요.</p>")
     items = []
     for i, r in enumerate(ranked[:LONG_SHOW], 1):
         boxes = "".join(
             f"<span class='bx {'u' if b > 0 else 'd'}' title='{E(lb)}: {pct(b)}'></span>"
             for b, lb in zip(r["blocks"], r["labels"]))
         medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}")
-        cnt = "달" if years == 1 else "번"
-        avg = "" if years == 1 else " · 1년에 평균 " + updown(r["cagr"])
+        n_blocks = len(r["blocks"])
+        avg = " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else ""
         items.append(
             f"<li class='lt'><div class='rk'>{medal}</div><div class='lb'>"
             f"<b>{E(r['name'])}</b>"
@@ -377,7 +392,7 @@ def long_panel(rows, years):
     lost = len(rows) - len(ranked)
     note = f"이 기간 동안 손해 본 ETF {lost}개는 뺐어요. " if lost else ""
     return (f"<p class='how'>🟥 = 그 {unit}에 올랐어요 &nbsp; 🟦 = 그 {unit}에 내렸어요 "
-            f"(칸을 누르고 있으면 날짜가 보여요)<br>{note}생긴 지 {years}년이 안 된 ETF는 계산에서 빠져요.</p>"
+            f"(칸을 누르고 있으면 날짜가 보여요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
             f"<ol class='longlist'>{''.join(items) or '<li class=empty>조건에 맞는 ETF가 없어요</li>'}</ol>")
 
 
@@ -391,7 +406,7 @@ header{padding:22px 16px 6px;max-width:1100px;margin:auto}h1{font-size:23px;marg
 .guide summary{font-weight:700;cursor:pointer}
 .bar{position:sticky;top:0;z-index:5;background:var(--bg);max-width:1100px;margin:auto;padding:8px 16px 6px;display:flex;flex-direction:column;gap:6px}
 .row{display:flex;gap:5px}
-.row button{flex:1 1 0;min-width:0;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:8px 4px;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}
+.row button{flex:1 1 0;min-width:0;letter-spacing:-.2px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:8px 4px;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}
 .row.big button{font-size:15px;font-weight:700;padding:11px 4px;border-radius:12px}
 .row button.on{background:var(--acc);border-color:var(--acc);color:#fff}
 main{max-width:1100px;margin:auto;padding:8px 16px 40px}
@@ -461,7 +476,7 @@ def dashboard(df, long, today, demo):
             "<button data-set='v:long' onclick=\"set('v','long')\">🌱 오래 꾸준히 오른</button>")
     mbtn = "".join(f"<button data-set='m:{k}' onclick=\"set('m','{k}')\">{lb}</button>"
                    for k, lb, _ in markets)
-    ybtn = "".join(f"<button data-set='y:{y}' onclick=\"set('y','{y}')\">{y}년</button>"
+    ybtn = "".join(f"<button data-set='y:{y}' onclick=\"set('y','{y}')\">{PERIOD_INFO[y][0]}</button>"
                    for y in PERIODS)
     counts = " · ".join(f"{f} {int((df.market == c).sum())}개" for c, f, _ in MARKETS
                         if (df.market == c).any())
