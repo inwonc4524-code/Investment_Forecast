@@ -406,9 +406,9 @@ header{padding:22px 16px 6px;max-width:1100px;margin:auto}h1{font-size:23px;marg
 .guide summary{font-weight:700;cursor:pointer}
 .bar{position:sticky;top:0;z-index:5;background:var(--bg);max-width:1100px;margin:auto;padding:8px 16px 6px;display:flex;flex-direction:column;gap:6px}
 .row{display:flex;gap:5px}
-.row button{flex:1 1 0;min-width:0;letter-spacing:-.2px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:8px 4px;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}
-.row.big button{font-size:15px;font-weight:700;padding:11px 4px;border-radius:12px}
-.row button.on{background:var(--acc);border-color:var(--acc);color:#1f1e1d}
+.row button{flex:1 1 0;min-width:0;letter-spacing:-.2px;border:1px solid var(--line);background:transparent;color:var(--sub);border-radius:8px;padding:8px 4px;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}
+.row.big button{font-size:15px;font-weight:600;padding:11px 4px;border-radius:10px}
+.row button.on{background:var(--soft);border-color:var(--soft);color:var(--fg)}
 main{max-width:1100px;margin:auto;padding:8px 16px 40px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
@@ -438,6 +438,10 @@ footer{color:var(--sub);font-size:12px;line-height:1.7;margin-top:26px}
 """
 
 JS = """
+(function(){function chk(){fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{
+ if(v&&v.build&&v.build!==BUILD){const u=new URL(location.href);if(u.searchParams.get('v')===v.build)return;
+ u.searchParams.set('v',v.build);location.replace(u.toString());}}).catch(()=>{});}
+chk();document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk();});window.addEventListener('pageshow',e=>{if(e.persisted)chk();});})();
 let dir={};function sortBy(id,i){const tb=document.querySelector('#'+id+' tbody');const rows=[...tb.rows];const k=id+i;dir[k]=!dir[k];
 rows.sort((a,b)=>{const x=a.cells[i],y=b.cells[i];const vx=x.dataset.v??x.textContent,vy=y.dataset.v??y.textContent;
 const nx=parseFloat(vx),ny=parseFloat(vy);const c=isNaN(nx)?String(vx).localeCompare(vy,'ko'):nx-ny;return dir[k]?-c:c;});
@@ -456,7 +460,7 @@ if(h[1]&&document.querySelector('[data-set="m:'+h[1]+'"]'))st.m=h[1];if(h[2])st.
 """
 
 
-def dashboard(df, long, today, demo):
+def dashboard(df, long, today, demo, build=""):
     banner = "<div class='demo'>⚠ 가짜(데모) 데이터로 만든 미리보기예요</div>" if demo else ""
     markets = [("all", "전체", None)] + [(c.lower(), f"{f} {n}", c) for c, f, n in MARKETS
                                           if (df.market == c).any()]
@@ -496,6 +500,7 @@ def dashboard(df, long, today, demo):
 
     return f"""<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark"><meta name="theme-color" content="#262624">
 <title>ETF 추천 대시보드</title><style>{CSS}</style></head><body>{banner}
@@ -511,7 +516,7 @@ def dashboard(df, long, today, demo):
 '100만 원이 → 얼마'는 그 기간 처음에 100만 원어치 샀다면 지금 얼마가 됐을지를 보여줘요.<br>
 ⚠ 지난 가격으로 계산한 참고 자료예요. 앞으로도 똑같이 오른다는 보장은 없고, 투자 권유가 아니에요.
 </footer></main>
-<script>{JS}</script></body></html>"""
+<script>const BUILD="{build}";{JS}</script></body></html>"""
 
 
 # ───────────────────────── 7. 실행 ─────────────────────────
@@ -529,9 +534,12 @@ def main():
     long = build_long(universe, closes)
     today = datetime.now(KST).strftime("%Y-%m-%d")
 
+    build = datetime.now(KST).strftime("%Y%m%d%H%M%S")
     os.makedirs(DOCS, exist_ok=True)
     with open(os.path.join(DOCS, "index.html"), "w", encoding="utf-8") as f:
-        f.write(dashboard(df, long, today, args.demo))
+        f.write(dashboard(df, long, today, args.demo, build))
+    with open(os.path.join(DOCS, "version.json"), "w", encoding="utf-8") as f:
+        json.dump({"build": build}, f)
     df.to_csv(os.path.join(DOCS, "latest.csv"), index=False, encoding="utf-8-sig")
 
     msg = phone_message(df, long, today)
