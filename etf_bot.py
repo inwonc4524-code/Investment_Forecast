@@ -41,6 +41,29 @@ MARKETS = [("KR", "🇰🇷", "한국"), ("US", "🇺🇸", "미국"),
            ("CN", "🇨🇳", "중국"), ("HK", "🇭🇰", "홍콩")]
 FLAG = {c: f for c, f, _ in MARKETS}
 
+THEMES = [   # 선택해서 보는 테마 탭 — etfs.csv 의 theme 칸에 key를 적어요 (여러 개면 | 로)
+    ("sp500", "🇺🇸 미국 S&P500", "미국 대표 회사 500개를 담은 ETF예요"),
+    ("tech", "💻 기술·나스닥", "애플·마이크로소프트·엔비디아 같은 기술 회사를 담은 ETF예요"),
+    ("semi", "💾 반도체", "반도체 회사들을 담은 ETF예요"),
+    ("bat", "🔋 2차전지", "배터리·전기차 회사들을 담은 ETF예요"),
+    ("ess", "⚡ 전고체·ESS·친환경", "차세대 배터리·전기 저장·태양광 같은 친환경 에너지 ETF예요"),
+    ("power", "🏭 AI 전력·원자력", "데이터센터 전기, 전력망, 원자력 회사를 담은 ETF예요"),
+    ("robot", "🤖 로봇·AI", "로봇과 인공지능 회사를 담은 ETF예요"),
+    ("bio", "🧬 바이오·헬스케어", "약·병원·의료기기 회사를 담은 ETF예요"),
+    ("defense", "🛡 방산·조선", "무기·배를 만드는 회사를 담은 ETF예요"),
+    ("div", "💰 배당", "회사가 나눠주는 돈(배당)을 많이 주는 회사들을 담은 ETF예요"),
+    ("gold", "🥇 금·원자재", "금·은·석유 같은 물건 값을 따라가는 ETF예요"),
+    ("bond", "🧾 채권", "나라나 회사에 돈을 빌려주고 이자를 받는 ETF예요. 덜 출렁여요"),
+    ("world", "🌏 해외 나라별", "일본·인도·대만 같은 다른 나라 시장을 담은 ETF예요"),
+]
+THEME_NAME = {k: n for k, n, _ in THEMES}
+
+
+def in_theme(df, key):
+    if key is None:
+        return df
+    return df[df.theme.fillna("").str.split("|").apply(lambda ts: key in ts)]
+
 
 # ───────────────────────── 1. 데이터 받아오기 ─────────────────────────
 
@@ -49,7 +72,11 @@ MKT_NAME = {"KR": "한국", "US": "미국", "CN": "중국", "HK": "홍콩"}
 
 
 def load_universe():
-    return pd.read_csv(os.path.join(HERE, "etfs.csv"), dtype=str)
+    u = pd.read_csv(os.path.join(HERE, "etfs.csv"), dtype=str)
+    if "theme" not in u:
+        u["theme"] = ""
+    u["theme"] = u.theme.fillna("").str.replace(" ", "")
+    return u
 
 
 RAW = {}   # 실제 가격(배당 조정 안 한 종가) — '실제 가격으로 얼마 올랐나' 표시에 사용
@@ -643,6 +670,8 @@ header{padding:22px 16px 6px;max-width:1100px;margin:auto}h1{font-size:23px;marg
 .guide summary{font-weight:700;cursor:pointer}
 .bar{position:sticky;top:0;z-index:5;background:var(--bg);max-width:1100px;margin:auto;padding:8px 16px 6px;display:flex;flex-direction:column;gap:6px}
 .row{display:flex;gap:5px}
+.row.scroll{overflow-x:auto;scrollbar-width:none}.row.scroll::-webkit-scrollbar{display:none}.row.scroll button{flex:none;padding:8px 12px}.tl{flex:none;align-self:center;font-size:12px;color:var(--sub);padding:0 4px 0 2px}
+.tdesc{font-size:13px;color:var(--sub);margin:2px 2px 10px}
 .row button{flex:1 1 0;min-width:0;letter-spacing:-.2px;border:1px solid var(--line);background:transparent;color:var(--sub);border-radius:8px;padding:8px 4px;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}
 .row.big button{font-size:15px;font-weight:600;padding:11px 4px;border-radius:10px}
 .row button.on{background:var(--soft);border-color:var(--soft);color:var(--fg)}
@@ -697,32 +726,63 @@ function draw(){
  document.querySelectorAll('.mk').forEach(e=>e.classList.toggle('on',e.dataset.m===st.m));
  document.querySelectorAll('.yr').forEach(e=>e.classList.toggle('on',e.dataset.y===st.y));
  document.getElementById('yrow').style.display=st.v==='long'?'flex':'none';
+ document.querySelectorAll('.row.scroll').forEach(r=>{const b=r.querySelector('button.on');if(b)r.scrollLeft=b.offsetLeft-r.offsetLeft-(r.clientWidth-b.offsetWidth)/2;});
  history.replaceState(null,'','#'+st.v+'-'+st.m+'-'+st.y);}
 (function(){const h=location.hash.slice(1).split('-');if(h[0]==='recent'||h[0]==='long')st.v=h[0];
 if(h[1]&&document.querySelector('[data-set="m:'+h[1]+'"]'))st.m=h[1];if(h[2])st.y=h[2];draw();})();
 """
 
 
+def tab_list(df):
+    """탭: 전체 · 나라별 · (선택) 테마별"""
+    tabs = [("all", "전체", None, None, "")]
+    tabs += [(c.lower(), f"{f} {n}", "m", c, "") for c, f, n in MARKETS if (df.market == c).any()]
+    tabs += [(k, n, "t", k, d) for k, n, d in THEMES if not in_theme(df, k).empty]
+    return tabs
+
+
+def tab_df(df, kind, val):
+    if kind == "m":
+        return df[df.market == val]
+    if kind == "t":
+        return in_theme(df, val)
+    return df
+
+
+def tab_row(r, kind, val):
+    if kind == "m":
+        return r["market"] == val
+    if kind == "t":
+        return val in str(r.get("theme", "") or "").split("|")
+    return True
+
+
+def tab_desc(d, sub):
+    return f"<p class='tdesc'>{E(d)} · {len(sub)}개</p>" if d else ""
+
+
 def dashboard(df, long, today, demo, build=""):
     banner = "<div class='demo'>⚠ 가짜(데모) 데이터로 만든 미리보기예요</div>" if demo else ""
-    markets = [("all", "전체", None)] + [(c.lower(), f"{f} {n}", c) for c, f, n in MARKETS
-                                          if (df.market == c).any()]
-
+    tabs = tab_list(df)
     recent = "".join(
-        f"<div class='mk' data-m='{k}'>{recent_panel(df if c is None else df[df.market == c], k)}</div>"
-        for k, _, c in markets)
+        f"<div class='mk' data-m='{k}'>{tab_desc(d, tab_df(df, kind, val))}"
+        f"{recent_panel(tab_df(df, kind, val), k)}</div>"
+        for k, _, kind, val, d in tabs)
     long_html = ""
-    for k, _, c in markets:
+    for k, _, kind, val, _ in tabs:
         inner = "".join(
             f"<div class='yr' data-y='{y}'>"
-            f"{long_panel([r for r in long[y] if c is None or r['market'] == c], y)}</div>"
+            f"{long_panel([r for r in long[y] if tab_row(r, kind, val)], y)}</div>"
             for y in PERIODS)
         long_html += f"<div class='mk' data-m='{k}'>{inner}</div>"
 
     vbtn = ("<button data-set='v:recent' onclick=\"set('v','recent')\">📅 요즘 추천</button>"
             "<button data-set='v:long' onclick=\"set('v','long')\">🌱 오래 꾸준히 오른</button>")
     mbtn = "".join(f"<button data-set='m:{k}' onclick=\"set('m','{k}')\">{lb}</button>"
-                   for k, lb, _ in markets)
+                   for k, lb, kind, _, _ in tabs if kind != "t")
+    tbtn = "<span class='tl'>테마</span>" + "".join(
+        f"<button data-set='m:{k}' onclick=\"set('m','{k}')\">{lb}</button>"
+        for k, lb, kind, _, _ in tabs if kind == "t")
     ybtn = "".join(f"<button data-set='y:{y}' onclick=\"set('y','{y}')\">{PERIOD_INFO[y][0]}</button>"
                    for y in PERIODS)
     counts = " · ".join(f"{f} {int((df.market == c).sum())}개" for c, f, _ in MARKETS
@@ -733,6 +793,7 @@ def dashboard(df, long, today, demo, build=""):
 <b>주식</b>은 회사를 아주 잘게 나눈 조각이에요. 조각을 사면 그 회사의 주인이 조금 되는 거예요.<br>
 <b>ETF</b>는 여러 회사의 조각을 <b>한 바구니에 담은 꾸러미</b>예요. 하나만 사도 여러 회사를 한꺼번에 가진 셈이라,
 회사 하나만 살 때보다 덜 출렁여요.<br>
+기본은 <b>전체 · 나라별</b>로 보고, 그 아래 <b>테마</b> 버튼(반도체·배당·채권처럼 비슷한 ETF 묶음)을 누르면 그 테마만 볼 수 있어요. 테마 버튼은 옆으로 밀면 더 있어요.<br>
 점수는 100점에 가까울수록 좋아요.<br><br>
 <b>📅 요즘 추천</b> (최근 몇 달 동안의 가격을 보고 골랐어요)<br>
 &nbsp;&nbsp;🏆 오늘의 추천: 잘 오르면서 너무 출렁이지 않는 것<br>
@@ -756,7 +817,7 @@ def dashboard(df, long, today, demo, build=""):
 <title>ETF 추천 대시보드</title><style>{CSS}</style></head><body>{banner}
 <header><h1>📊 오늘의 ETF 추천</h1><p>{today} 업데이트 · {counts} ETF를 살펴봤어요</p></header>
 {guide}
-<nav class="bar"><div class="row big">{vbtn}</div><div class="row">{mbtn}</div>
+<nav class="bar"><div class="row big">{vbtn}</div><div class="row">{mbtn}</div><div class="row scroll">{tbtn}</div>
 <div class="row" id="yrow">{ybtn}</div></nav>
 <main>
 <div class="view" data-v="recent">{recent}</div>
