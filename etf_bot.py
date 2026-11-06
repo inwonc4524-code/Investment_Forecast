@@ -82,6 +82,18 @@ def fetch_prices(tickers):
                 closes[t] = s
         except Exception:
             pass
+    # 잠깐 오류로 못 받은 종목은 하나씩 한 번 더 받아오기
+    retry = [t for t in tickers if t not in closes]
+    if retry:
+        raw_r = yf.download(retry, period="max", auto_adjust=False,
+                            progress=False, group_by="ticker", threads=False)
+        for t in retry:
+            try:
+                s = _pick(raw_r, t, t)
+                if len(s) > 0:
+                    closes[t] = s
+            except Exception:
+                pass
     missing = [t for t in tickers if t not in closes]
     if missing:
         print("가격을 못 받은 종목:", ", ".join(missing))
