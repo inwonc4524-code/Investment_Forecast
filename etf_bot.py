@@ -266,10 +266,10 @@ def phone_message(df, long, today):
         p = picks(sub)
         out.append(f"\n{flag} {label}")
         for icon, key, extra in [
-            ("🏆 추천", "overall", lambda r: f"점수 {r.total:.0f}"),
-            ("🚀 쑥쑥", "momentum", lambda r: f"6달 {pct(r.r6m)}"),
-            ("🎢 쉬는중", "rebound", lambda r: f"최고점보다 {pct(r.from_high)}"),
-            ("🐢 꾸준", "stable", lambda r: f"흔들림 {shake(r.vol60)}"),
+            ("🏆 오늘의 추천", "overall", lambda r: f"{r.total:.0f}점"),
+            ("🚀 쑥쑥 오르는 중", "momentum", lambda r: f"6달 동안 {pct(r.r6m)}"),
+            ("🎢 잠깐 쉬는 중", "rebound", lambda r: f"제일 비쌀 때보다 {pct(r.from_high)}"),
+            ("🐢 천천히 꾸준히", "stable", lambda r: f"흔들림 {shake(r.vol60)}"),
         ]:
             rows = p[key]
             if rows.empty:
@@ -284,7 +284,7 @@ def phone_message(df, long, today):
         out.append(f"\n🌱 10년 꾸준히 1등: {FLAG.get(b['market'], '')} {b['name']}"
                    f" — 10번 중 {b['ups']}번 오름, 100만 원 → {won(b['total'])}")
     out.append("\n🔥 = 너무 빨리 올라서 조심")
-    out.append("※ 지난 가격으로 계산한 참고용이에요. 투자 권유가 아니에요.")
+    out.append("※ 지나간 숫자로 계산한 참고용이에요. 꼭 오른다는 뜻도, 사라는 뜻도 아니에요.")
     return "\n".join(out)
 
 
@@ -329,18 +329,18 @@ def updown(v, text=None):
 def recent_panel(sub, mk):
     p = picks(sub)
     cards = (
-        card("🏆 오늘의 추천", "요즘 잘 오르면서도 너무 출렁이지 않는 ETF예요",
-             p["overall"], lambda r: f"점수 {r.total:.0f}") +
+        card("🏆 오늘의 추천", "요즘 잘 오르면서도 너무 출렁이지 않는 ETF예요. 100점에 가까울수록 좋아요",
+             p["overall"], lambda r: f"{r.total:.0f}점") +
         card("🚀 요즘 쑥쑥 오르는 중", "최근 1~6달 동안 가격이 많이 오른 ETF예요",
              p["momentum"], lambda r: f"6달 동안 {updown(r.r6m)}") +
         card("🎢 잠깐 쉬는 중", "원래는 잘 오르던 ETF인데 요즘 잠깐 내려왔어요. 다시 오를 수도, 더 내려갈 수도 있어요",
-             p["rebound"], lambda r: f"최고점보다 {updown(r.from_high)}") +
-        card("🐢 천천히 꾸준히", "가격이 크게 흔들리지 않고 6달 동안 조금이라도 오른 ETF예요",
+             p["rebound"], lambda r: f"제일 비쌀 때보다 {updown(r.from_high)}") +
+        card("🐢 천천히 꾸준히", "가격이 덜 출렁이고, 6달 동안 조금이라도 오른 ETF예요",
              p["stable"], lambda r: f"흔들림 {shake(r.vol60)}")
     )
 
-    cols = [("name", "이름"), ("category", "종류"), ("r1w", "1주"), ("r1m", "1달"), ("r3m", "3달"),
-            ("r6m", "6달"), ("r12m", "1년"), ("from_high", "최고점보다"),
+    cols = [("name", "이름"), ("category", "무엇을 담았나"), ("r1w", "1주"), ("r1m", "1달"), ("r3m", "3달"),
+            ("r6m", "6달"), ("r12m", "1년"), ("from_high", "제일 비쌀 때보다"),
             ("vol60", "흔들림"), ("total", "점수")]
 
     def cell(c, r):
@@ -371,7 +371,7 @@ def long_panel(rows, years):
     ranked = long_rank(rows)
     _, unit, cnt, pname = PERIOD_INFO[years]
     if not rows:
-        return (f"<p class='empty big'>여기엔 {pname} 넘게 된 ETF가 없어요.<br>"
+        return (f"<p class='empty big'>여기엔 생긴 지 {pname}이 넘은 ETF가 없어요.<br>"
                 f"생긴 지 {pname}이 안 된 ETF는 계산할 수 없어요.</p>")
     items = []
     for i, r in enumerate(ranked[:LONG_SHOW], 1):
@@ -390,10 +390,10 @@ def long_panel(rows, years):
             f"<div class='won'><small>100만 원이</small><b>{won(r['total'])}</b>"
             f"<small>{updown(r['total'])}</small></div></li>")
     lost = len(rows) - len(ranked)
-    note = f"이 기간 동안 손해 본 ETF {lost}개는 뺐어요. " if lost else ""
+    note = f"이 기간 동안 가격이 내려간 ETF {lost}개는 뺐어요. " if lost else ""
     return (f"<p class='how'>🟥 = 그 {unit}에 올랐어요 &nbsp; 🟦 = 그 {unit}에 내렸어요 "
             f"(칸을 누르고 있으면 날짜가 보여요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
-            f"<ol class='longlist'>{''.join(items) or '<li class=empty>조건에 맞는 ETF가 없어요</li>'}</ol>")
+            f"<ol class='longlist'>{''.join(items) or '<li class=empty>여기에 맞는 ETF가 없어요</li>'}</ol>")
 
 
 CSS = """
@@ -487,14 +487,21 @@ def dashboard(df, long, today, demo, build=""):
 
     guide = """
 <div class="guide"><details><summary>👀 이 페이지 보는 법 (눌러서 열기)</summary>
-<b>ETF</b>는 여러 회사 주식을 한 바구니에 담아서 한 번에 살 수 있게 만든 상품이에요.<br>
-<b>📅 요즘 추천</b> — 최근 몇 달 동안의 가격을 보고 골랐어요.<br>
+<b>주식</b>은 회사를 아주 잘게 나눈 조각이에요. 조각을 사면 그 회사의 주인이 조금 되는 거예요.<br>
+<b>ETF</b>는 여러 회사의 조각을 <b>한 바구니에 담은 꾸러미</b>예요. 하나만 사도 여러 회사를 한꺼번에 가진 셈이라,
+회사 하나만 살 때보다 덜 출렁여요.<br>
+점수는 100점에 가까울수록 좋아요.<br><br>
+<b>📅 요즘 추천</b> (최근 몇 달 동안의 가격을 보고 골랐어요)<br>
 &nbsp;&nbsp;🏆 오늘의 추천: 잘 오르면서 너무 출렁이지 않는 것<br>
-&nbsp;&nbsp;🚀 쑥쑥: 요즘 많이 오른 것 &nbsp; 🎢 쉬는 중: 잘 오르다가 잠깐 내려온 것 &nbsp; 🐢 꾸준: 덜 흔들리는 것<br>
-<b>🌱 오래 꾸준히 오른</b> — 1·3·5·10·20년 동안 해마다 올랐는지 색깔 칸으로 보여줘요.<br>
-<span class="up">빨간색</span>은 올랐다는 뜻, <span class="down">파란색</span>은 내렸다는 뜻이에요.<br>
-<b>흔들림</b>: 가격이 하루하루 얼마나 크게 오르내리는지 (작음 · 보통 · 큼)<br>
-<b>최고점보다</b>: 지난 1년 중 가장 비쌌을 때보다 지금 얼마나 내려와 있는지<br>
+&nbsp;&nbsp;🚀 쑥쑥 오르는 중: 요즘 가격이 많이 오른 것<br>
+&nbsp;&nbsp;🎢 잠깐 쉬는 중: 잘 오르다가 요즘 잠깐 내려온 것<br>
+&nbsp;&nbsp;🐢 천천히 꾸준히: 가격이 덜 출렁이는 것<br><br>
+<b>표에 나오는 말</b><br>
+&nbsp;&nbsp;<b>무엇을 담았나</b>: 바구니에 어떤 회사들이 들어 있는지 (예: 반도체 회사들)<br>
+&nbsp;&nbsp;<b>흔들림</b>: 가격이 하루하루 얼마나 크게 오르내리는지 (작음 · 보통 · 큼)<br>
+&nbsp;&nbsp;<b>제일 비쌀 때보다</b>: 지난 1년 중 가장 비쌌던 날보다 지금 얼마나 싸졌는지<br>
+&nbsp;&nbsp;<span class="up">빨간 숫자</span>는 올랐다는 뜻, <span class="down">파란 숫자</span>는 내렸다는 뜻이에요<br><br>
+<b>🌱 오래 꾸준히 오른</b>: 1주~20년 동안 기간마다 올랐는지 색깔 칸으로 보여줘요.<br>
 <b>🔥 너무 빨리 오름</b>: 짧은 시간에 많이 올라서, 잠깐 내려갈 수도 있으니 조심
 </details></div>"""
 
@@ -512,9 +519,9 @@ def dashboard(df, long, today, demo, build=""):
 <div class="view" data-v="recent">{recent}</div>
 <div class="view" data-v="long">{long_html}</div>
 <footer>
-💡 가격은 배당금(ETF가 나눠주는 돈)을 포함해서 계산했고, 수수료·세금은 빠져 있어요.
-'100만 원이 → 얼마'는 그 기간 처음에 100만 원어치 샀다면 지금 얼마가 됐을지를 보여줘요.<br>
-⚠ 지난 가격으로 계산한 참고 자료예요. 앞으로도 똑같이 오른다는 보장은 없고, 투자 권유가 아니에요.
+💡 ETF가 나눠주는 돈(배당금)도 더해서 계산했고, 살 때 내는 수수료와 세금은 빼지 않았어요.<br>
+'100만 원이 → 얼마'는 그 기간 처음에 100만 원어치 샀다면 지금 얼마가 됐을지 보여줘요.<br>
+⚠ 지나간 숫자로 계산한 참고용이에요. 앞으로도 똑같이 오른다는 약속도, 사라는 뜻도 아니에요.
 </footer></main>
 <script>const BUILD="{build}";{JS}</script></body></html>"""
 
