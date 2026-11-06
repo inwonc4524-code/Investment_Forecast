@@ -285,6 +285,24 @@ def money(v, market):
     return f"{v:,.2f}"
 
 
+def load_reasons():
+    """reasons.json — 기간별로 '왜 올랐나' 한 줄 (Claude가 뉴스를 보고 정리)"""
+    try:
+        with open(os.path.join(HERE, "reasons.json"), encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+REASONS = load_reasons()
+
+
+def reason_for(ticker, years):
+    r = REASONS.get(ticker) or {}
+    key = years if years in ("1w", "1m") else "1" if years == 1 else "long"
+    return r.get(key, "")
+
+
 def won(total):
     """100만 원이 얼마가 됐는지"""
     v = 100 * (1 + total)
@@ -416,6 +434,10 @@ def price_box(r):
             f"<small>{money(p0, m)} → {money(p1, m)}</small></div>")
 
 
+def why_html(text):
+    return f"<span class='why'>💬 {E(text)}</span>" if text else ""
+
+
 def long_panel(rows, years):
     ranked = long_rank(rows)
     _, unit, cnt, pname = PERIOD_INFO[years]
@@ -435,14 +457,15 @@ def long_panel(rows, years):
             f"<b>{E(r['name'])}</b>"
             f"<span class='tk'>{FLAG.get(r['market'], '')} {E(short_ticker(r['ticker']))} · {E(r['category'])}</span>"
             f"<div class='boxes'>{boxes}</div>"
-            f"<span class='sm'>{n_blocks}{cnt} 중 <b>{r['ups']}{cnt}</b> 올랐어요{avg}</span></div>"
+            f"<span class='sm'>{n_blocks}{cnt} 중 <b>{r['ups']}{cnt}</b> 올랐어요{avg}</span>"
+            f"{why_html(reason_for(r['ticker'], years))}</div>"
             f"{price_box(r)}"
             f"<div class='won'><small>100만 원이</small><b>{won(r['total'])}</b>"
             f"<small>{updown(r['total'])}</small></div></li>")
     lost = len(rows) - len(ranked)
     note = f"이 기간 동안 가격이 내려간 ETF {lost}개는 뺐어요. " if lost else ""
     return (f"<p class='how'>🟥 = 그 {unit}에 올랐어요 &nbsp; 🟦 = 그 {unit}에 내렸어요 "
-            f"(칸을 누르고 있으면 날짜가 보여요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
+            f"(칸을 누르고 있으면 날짜가 보여요)<br>💬 = 그 기간에 왜 올랐는지 Claude가 뉴스를 보고 짧게 정리한 거예요 (틀릴 수 있어요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
             f"<ol class='longlist'>{''.join(items) or '<li class=empty>여기에 맞는 ETF가 없어요</li>'}</ol>")
 
 
@@ -481,6 +504,7 @@ th:nth-child(-n+2),td:nth-child(-n+2){text-align:left}
 .lb{flex:1;min-width:0;gap:2px}.lb .boxes{display:flex;flex-direction:row;flex-wrap:wrap;gap:3px;margin:5px 0 3px}
 .bx{width:14px;height:14px;border-radius:3px;display:inline-block}.bx.u{background:var(--up)}.bx.d{background:var(--down)}
 .sm{font-size:13px;color:var(--sub)}.sm b{color:var(--fg)}
+.why{display:block;font-size:13px;line-height:1.5;color:var(--fg);background:var(--soft);border-radius:8px;padding:6px 9px;margin-top:6px}
 .won{text-align:right;flex:0 0 auto;display:flex;flex-direction:column}.won b{font-size:17px}.won small{font-size:11px;color:var(--sub)}
 .won.pr{border-right:1px solid var(--line);padding-right:10px;margin-right:2px}.won.pr b{font-size:15px}.won.pr small:last-child{white-space:nowrap}
 @media (max-width:480px){.lt{flex-wrap:wrap}.lt .lb{flex:1 1 calc(100% - 40px)}.lt .won{flex:1 1 40%;margin-top:6px;text-align:left;padding-left:38px}.lt .won.pr{border-right:0}}
@@ -611,7 +635,9 @@ def main():
         url = f"https://{owner}.github.io/{name}/"
     if url:   # 알림에서 열 때 예전에 저장된 화면 대신 항상 새 화면이 나오게
         url = f"{url}{'&' if '?' in url else '?'}v={build}"
-    if not args.demo:
+    if os.environ.get("GITHUB_EVENT_NAME") == "push":
+        print("코드·이유 파일을 고쳐서 다시 만든 거라 알림은 보내지 않아요.")
+    elif not args.demo:
         send_ntfy("오늘의 ETF 추천", msg, url)
 
 
