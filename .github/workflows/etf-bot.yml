@@ -1,0 +1,37 @@
+name: ETF 추천 봇
+
+on:
+  schedule:
+    # 한국시간 화~토 오전 7시 13분 (미국장 마감 직후, 한국장 전날 종가 반영)
+    - cron: "13 22 * * 1-5"
+  workflow_dispatch: {}   # Actions 화면에서 "Run workflow" 버튼으로 바로 실행
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: ETF 분석 + 휴대폰 알림
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python etf_bot.py
+
+      - name: 대시보드 저장
+        run: |
+          git config user.name "etf-bot"
+          git config user.email "etf-bot@users.noreply.github.com"
+          git add docs
+          git commit -m "ETF 대시보드 업데이트 $(TZ=Asia/Seoul date +%F)" || echo "변경 없음"
+          git push

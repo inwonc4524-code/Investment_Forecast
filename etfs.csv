@@ -1,0 +1,30 @@
+ticker,name,market,category
+069500.KS,KODEX 200,KR,국내 대형주
+229200.KS,KODEX 코스닥150,KR,국내 중소형주
+091160.KS,KODEX 반도체,KR,국내 반도체
+139260.KS,TIGER 200 IT,KR,국내 IT
+305720.KS,KODEX 2차전지산업,KR,국내 2차전지
+091170.KS,KODEX 은행,KR,국내 금융
+161510.KS,PLUS 고배당주,KR,국내 배당
+360750.KS,TIGER 미국S&P500,KR,미국 대형주(원화)
+133690.KS,TIGER 미국나스닥100,KR,미국 기술주(원화)
+381170.KS,TIGER 미국테크TOP10 INDXX,KR,미국 빅테크(원화)
+458730.KS,TIGER 미국배당다우존스,KR,미국 배당(원화)
+132030.KS,KODEX 골드선물(H),KR,금
+148070.KS,KOSEF 국고채10년,KR,국내 채권
+SPY,SPDR S&P 500,US,미국 대형주
+QQQ,Invesco QQQ (나스닥100),US,미국 기술주
+VTI,Vanguard Total Stock Market,US,미국 전체시장
+IWM,iShares Russell 2000,US,미국 소형주
+SCHD,Schwab US Dividend Equity,US,미국 배당
+SMH,VanEck Semiconductor,US,반도체
+XLK,Technology Select Sector,US,미국 기술 섹터
+XLF,Financial Select Sector,US,미국 금융 섹터
+XLV,Health Care Select Sector,US,미국 헬스케어 섹터
+XLE,Energy Select Sector,US,미국 에너지 섹터
+XLU,Utilities Select Sector,US,미국 유틸리티 섹터
+VEA,Vanguard Developed Markets,US,선진국(미국 제외)
+VWO,Vanguard Emerging Markets,US,신흥국
+GLD,SPDR Gold Shares,US,금
+TLT,iShares 20+ Year Treasury,US,미국 장기채
+IEF,iShares 7-10 Year Treasury,US,미국 중기채
