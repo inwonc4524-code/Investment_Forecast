@@ -47,16 +47,31 @@ def load_universe():
     return pd.read_csv(os.path.join(HERE, "etfs.csv"), dtype=str)
 
 
+RAW = {}   # 실제 가격(배당 조정 안 한 종가) — '실제 가격으로 얼마 올랐나' 표시에 사용
+
+
+def _pick(raw, key, name):
+    """다운로드 결과에서 수익률 계산용(배당 포함 수정종가)을 돌려주고, 실제 가격은 RAW에 저장"""
+    d = raw[key] if isinstance(raw.columns, pd.MultiIndex) else raw
+    real = d["Close"].dropna()
+    real = real[real > 0]
+    adj = (d["Adj Close"] if "Adj Close" in d else d["Close"]).dropna()
+    adj = adj[adj > 0]
+    if len(real):
+        RAW[name] = real
+    return adj
+
+
 def fetch_prices(tickers):
     """야후 파이낸스에서 상장 이후 전체 기간의 가격(배당 포함 수정종가)을 받아옵니다."""
     import yfinance as yf
 
-    raw = yf.download(tickers, period="max", auto_adjust=True,
+    raw = yf.download(tickers, period="max", auto_adjust=False,
                       progress=False, group_by="ticker", threads=True)
     closes = {}
     for t in tickers:
         try:
-            s = raw[t]["Close"] if isinstance(raw.columns, pd.MultiIndex) else raw["Close"]
+            s = _pick(raw, t, t)
             s = s.dropna()
             s = s[s > 0]
             if len(s) > 0:
@@ -81,6 +96,7 @@ def demo_prices(tickers, seed=7):
         r = rng.normal(drift, vol, len(idx))
         r[-25:] += rng.normal(0, 0.004)
         closes[t] = pd.Series(10000 * np.exp(np.cumsum(r)), index=idx)
+    RAW.update(closes)
     return closes
 
 
@@ -163,7 +179,7 @@ def long_term(s, years):
         w = s.iloc[-(n + 1):]
         blocks = list((w / w.shift(1) - 1).iloc[1:])
         total = float(w.iloc[-1] / w.iloc[0] - 1)
-        return {"total": total, "cagr": np.nan, "blocks": blocks,
+        return {"total": total, "cagr": np.nan, "blocks": blocks, "start": w.index[0],
                 "labels": [d.strftime("%m월 %d일") for d in w.index[1:]],
                 "ups": sum(b > 0 for b in blocks)}
     start = end - pd.DateOffset(years=years)
@@ -180,6 +196,7 @@ def long_term(s, years):
     total = px[-1] / px[0] - 1
     return {
         "total": total,
+        "start": cuts[0],
         "cagr": (1 + total) ** (1 / years) - 1,
         "blocks": blocks,
         "labels": labels,
@@ -198,6 +215,10 @@ def build_long(universe, closes):
                 continue
             lt = long_term(s.dropna(), y)
             if lt:
+                real = RAW.get(u.ticker)
+                if real is not None and len(real):
+                    lt["p0"] = float(real.asof(lt["start"])) if real.index[0] <= lt["start"] else np.nan
+                    lt["p1"] = float(real.iloc[-1])
                 rows.append({**u.to_dict(), **lt})
         out[y] = rows
     return out
@@ -247,6 +268,21 @@ def shake(v):
 
 def short_ticker(t):
     return t.split(".")[0]
+
+
+def money(v, market):
+    """나라별 돈 단위로"""
+    if pd.isna(v):
+        return "-"
+    if market == "KR":
+        return f"{v:,.0f}원"
+    if market == "US":
+        return f"${v:,.2f}"
+    if market == "CN":
+        return f"{v:,.2f}위안"
+    if market == "HK":
+        return f"HK${v:,.2f}"
+    return f"{v:,.2f}"
 
 
 def won(total):
@@ -367,6 +403,19 @@ def recent_panel(sub, mk):
             f"<tbody>{body}</tbody></table></div>")
 
 
+def price_box(r):
+    """실제 가격으로 얼마 올랐는지 (예: 52,000원 → 188,700원, +136,700원)"""
+    p0, p1 = r.get("p0", np.nan), r.get("p1", np.nan)
+    if pd.isna(p0) or pd.isna(p1):
+        return ""
+    m = r["market"]
+    d = p1 - p0
+    sign = "+" if d > 0 else "-" if d < 0 else ""
+    diff = sign + money(abs(d), m)
+    return (f"<div class='won pr'><small>실제 가격</small><b>{updown(d, diff)}</b>"
+            f"<small>{money(p0, m)} → {money(p1, m)}</small></div>")
+
+
 def long_panel(rows, years):
     ranked = long_rank(rows)
     _, unit, cnt, pname = PERIOD_INFO[years]
@@ -387,6 +436,7 @@ def long_panel(rows, years):
             f"<span class='tk'>{FLAG.get(r['market'], '')} {E(short_ticker(r['ticker']))} · {E(r['category'])}</span>"
             f"<div class='boxes'>{boxes}</div>"
             f"<span class='sm'>{n_blocks}{cnt} 중 <b>{r['ups']}{cnt}</b> 올랐어요{avg}</span></div>"
+            f"{price_box(r)}"
             f"<div class='won'><small>100만 원이</small><b>{won(r['total'])}</b>"
             f"<small>{updown(r['total'])}</small></div></li>")
     lost = len(rows) - len(ranked)
@@ -431,7 +481,9 @@ th:nth-child(-n+2),td:nth-child(-n+2){text-align:left}
 .lb{flex:1;min-width:0;gap:2px}.lb .boxes{display:flex;flex-direction:row;flex-wrap:wrap;gap:3px;margin:5px 0 3px}
 .bx{width:14px;height:14px;border-radius:3px;display:inline-block}.bx.u{background:var(--up)}.bx.d{background:var(--down)}
 .sm{font-size:13px;color:var(--sub)}.sm b{color:var(--fg)}
-.won{text-align:right;flex:0 0 auto}.won b{font-size:17px}.won small{font-size:11px;color:var(--sub)}
+.won{text-align:right;flex:0 0 auto;display:flex;flex-direction:column}.won b{font-size:17px}.won small{font-size:11px;color:var(--sub)}
+.won.pr{border-right:1px solid var(--line);padding-right:10px;margin-right:2px}.won.pr b{font-size:15px}.won.pr small:last-child{white-space:nowrap}
+@media (max-width:480px){.lt{flex-wrap:wrap}.lt .lb{flex:1 1 calc(100% - 40px)}.lt .won{flex:1 1 40%;margin-top:6px;text-align:left;padding-left:38px}.lt .won.pr{border-right:0}}
 .view,.mk,.yr{display:none}.view.on,.mk.on,.yr.on{display:block}
 .demo{background:#f59e0b;color:#111;padding:8px 16px;text-align:center;font-weight:600}
 footer{color:var(--sub);font-size:12px;line-height:1.7;margin-top:26px}
