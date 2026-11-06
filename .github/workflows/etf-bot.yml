@@ -4,10 +4,18 @@ on:
   schedule:
     # 한국시간 화~토 오전 7시 13분 (미국장 마감 직후, 한국장 전날 종가 반영)
     - cron: "13 22 * * 1-5"
+    # 각 나라 장 마감 뒤 '오늘 많이 오른 ETF' 알림 (한국시간 월~금)
+    - cron: "11 7 * * 1-5"    # 오후 4시 11분 — 한국장(3시 30분) 마감 뒤
+    - cron: "37 7 * * 1-5"    # 오후 4시 37분 — 중국장(4시) 마감 뒤
+    - cron: "23 8 * * 1-5"    # 오후 5시 23분 — 홍콩장(5시) 마감 뒤
   workflow_dispatch: {}   # Actions 화면에서 "Run workflow" 버튼으로 바로 실행
   push:                   # 종목 목록이나 코드를 고치면 바로 한 번 실행
     branches: [main]
     paths: ["etf_bot.py", "etfs.csv", "reasons.json"]
+
+concurrency:            # 여러 번 겹쳐 실행되면 차례로 (저장할 때 부딪히지 않게)
+  group: bot
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -29,6 +37,7 @@ jobs:
       - name: ETF 분석 + 휴대폰 알림
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          CLOSE_MARKET: ${{ github.event.schedule == '11 7 * * 1-5' && 'KR' || github.event.schedule == '37 7 * * 1-5' && 'CN' || github.event.schedule == '23 8 * * 1-5' && 'HK' || '' }}
         run: python etf_bot.py
 
       - name: 대시보드 저장

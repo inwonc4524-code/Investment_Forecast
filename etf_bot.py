@@ -29,9 +29,9 @@ DOCS = os.path.join(HERE, "docs")
 TOP_N = 3                    # '요즘 추천' 카드마다 보여줄 개수
 LONG_SHOW = 10               # '오래 꾸준히' 목록에 보여줄 개수
 MIN_DAYS = 220               # 이보다 데이터가 짧으면(상장 1년 미만 등) 제외
-PERIODS = ["1w", "1m", 1, 3, 5, 10, 20]  # '오래 꾸준히' 기간
+PERIODS = ["1d", "1w", "1m", 1, 3, 5, 10, 20]  # '오래 꾸준히' 기간
 PERIOD_INFO = {   # 기간: (버튼 이름, 칸 하나의 단위, 세는 말, 기간 이름)
-    "1w": ("1주", "날", "일", "1주"), "1m": ("1달", "날", "일", "1달"),
+    "1d": ("1일", "날", "일", "1일"), "1w": ("1주", "날", "일", "1주"), "1m": ("1달", "날", "일", "1달"),
     1: ("1년", "달", "달", "1년"), 3: ("3년", "해", "번", "3년"), 5: ("5년", "해", "번", "5년"),
     10: ("10년", "해", "번", "10년"), 20: ("20년", "해", "번", "20년"),
 }
@@ -42,6 +42,10 @@ FLAG = {c: f for c, f, _ in MARKETS}
 
 
 # ───────────────────────── 1. 데이터 받아오기 ─────────────────────────
+
+CLOSE_KST = {"KR": "15:30", "US": "06:00", "CN": "16:00", "HK": "17:00"}   # 각 나라 장 마감 (한국시간)
+MKT_NAME = {"KR": "한국", "US": "미국", "CN": "중국", "HK": "홍콩"}
+
 
 def load_universe():
     return pd.read_csv(os.path.join(HERE, "etfs.csv"), dtype=str)
@@ -124,6 +128,7 @@ def indicators(s):
         "price": float(s.iloc[-1]),
         "date": s.index[-1].strftime("%Y-%m-%d"),
         "since": s.index[0].strftime("%Y-%m-%d"),
+        "r1d": ret(s, 1),
         "r1w": ret(s, 5),
         "r1m": ret(s, 21),
         "r3m": ret(s, 63),
@@ -172,15 +177,15 @@ def long_term(s, years):
     """기간 동안의 성적. 데이터가 모자라면 None.
     1주·1달: 하루씩, 1년: 12달을 한 달씩, 3년 이상: 1년씩 잘라서 몇 번 올랐는지 셉니다."""
     end = s.index[-1]
-    if years in ("1w", "1m"):
-        n = 5 if years == "1w" else 21
+    if years in ("1d", "1w", "1m"):
+        n = {"1d": 1, "1w": 5, "1m": 21}[years]
         if len(s) < n + 1:
             return None
         w = s.iloc[-(n + 1):]
         blocks = list((w / w.shift(1) - 1).iloc[1:])
         total = float(w.iloc[-1] / w.iloc[0] - 1)
         return {"total": total, "cagr": np.nan, "blocks": blocks, "start": w.index[0],
-                "labels": [d.strftime("%m월 %d일") for d in w.index[1:]],
+                "labels": [d.strftime("%m월 %d일") for d in w.index[1:]], "end": w.index[-1],
                 "ups": sum(b > 0 for b in blocks)}
     start = end - pd.DateOffset(years=years)
     if s.index[0] > start + pd.Timedelta(days=15):
@@ -227,7 +232,8 @@ def build_long(universe, closes):
 def long_rank(rows):
     """올라간 횟수가 많은 순 → 같으면 1년 평균 수익률 높은 순. 전체로 손해 본 건 제외."""
     good = [r for r in rows if r["total"] > 0]
-    return sorted(good, key=lambda r: (r["ups"] / len(r["blocks"]), r["cagr"]), reverse=True)
+    return sorted(good, key=lambda r: (r["ups"] / len(r["blocks"]),
+                                       r["total"] if pd.isna(r["cagr"]) else r["cagr"]), reverse=True)
 
 
 # ───────────────────────── 4. 공통 ─────────────────────────
@@ -297,9 +303,12 @@ def load_reasons():
 REASONS = load_reasons()
 
 
-def reason_for(ticker, years):
+def reason_for(ticker, years, end=None):
     r = REASONS.get(ticker) or {}
-    key = years if years in ("1w", "1m") else "1" if years == 1 else "long"
+    if years == "1d":   # 1일 이유는 그 날짜 것만 (예전 날 이유가 남아 있으면 안 보여줌)
+        if end is None or r.get("1d_date") != pd.Timestamp(end).strftime("%Y-%m-%d"):
+            return ""
+    key = years if years in ("1d", "1w", "1m") else "1" if years == 1 else "long"
     return r.get(key, "")
 
 
@@ -337,9 +346,47 @@ def phone_message(df, long, today):
         b = best[0]
         out.append(f"\n🌱 10년 꾸준히 1등: {FLAG.get(b['market'], '')} {b['name']}"
                    f" — 10번 중 {b['ups']}번 오름, 100만 원 → {won(b['total'])}")
+    us = df[(df.market == "US") & (df.r1d > 0)].sort_values("r1d", ascending=False).head(3)
+    if not us.empty:
+        d = pd.Timestamp(us.date.max())
+        names = ", ".join(f"{r['name']} {pct(r.r1d)}" for _, r in us.iterrows())
+        out.append(f"\n🇺🇸 미국장 마감({d.month}월 {d.day}일) 하루 동안 많이 오른 곳: {names}")
     out.append("\n🔥 = 너무 빨리 올라서 조심")
     out.append("※ 지나간 숫자로 계산한 참고용이에요. 꼭 오른다는 뜻도, 사라는 뜻도 아니에요.")
     return "\n".join(out)
+
+
+def close_message(df, market, today):
+    """그 나라 장이 끝났을 때: 오늘 하루 많이 오른 종목"""
+    sub = df[df.market == market].dropna(subset=["r1d"]).sort_values("r1d", ascending=False)
+    flag = FLAG.get(market, "")
+    name = MKT_NAME.get(market, market)
+    if sub.empty:
+        return None
+    last = sub.date.max()
+    late = "" if last == today else f"\n(아직 오늘 가격이 안 들어와서 {last} 기준이에요)"
+    up = sub[sub.r1d > 0]
+    out = [f"{flag} {name} 주식시장이 끝났어요 ({CLOSE_KST.get(market, '')} 마감){late}", ""]
+    if up.empty:
+        out.append("오늘은 오른 곳이 없어요. 다 같이 쉬는 날이에요 🛌")
+    else:
+        out.append("🔝 오늘 하루 많이 오른 순서")
+        for i, (_, r) in enumerate(up.head(5).iterrows(), 1):
+            out.append(f"{i}. {r['name']} {pct(r.r1d)}" + (f"  ({theme_names(r)})" if theme_names(r) else ""))
+    down = sub[sub.r1d < 0].tail(1)
+    if not down.empty:
+        r = down.iloc[0]
+        out.append(f"\n📉 가장 많이 내린 곳: {r['name']} {pct(r.r1d)}")
+    n_up, n_all = int((sub.r1d > 0).sum()), len(sub)
+    out.append(f"\n오른 곳 {n_up}개 / 전체 {n_all}개")
+    out.append("※ 하루 움직임은 운도 커요. 참고만 하세요.")
+    return "\n".join(out)
+
+
+def theme_names(r):
+    t = str(r.get("theme", "") or "")
+    names = [THEME_NAME[k] for k in t.split("|") if k and k not in ("kr", "us") and k in globals().get("THEME_NAME", {})]
+    return ", ".join(names)
 
 
 def send_ntfy(title, message, click_url):
@@ -393,7 +440,7 @@ def recent_panel(sub, mk):
              p["stable"], lambda r: f"흔들림 {shake(r.vol60)}")
     )
 
-    cols = [("name", "이름"), ("category", "무엇을 담았나"), ("r1w", "1주"), ("r1m", "1달"), ("r3m", "3달"),
+    cols = [("name", "이름"), ("category", "무엇을 담았나"), ("r1d", "1일"), ("r1w", "1주"), ("r1m", "1달"), ("r3m", "3달"),
             ("r6m", "6달"), ("r12m", "1년"), ("from_high", "제일 비쌀 때보다"),
             ("vol60", "흔들림"), ("total", "점수")]
 
@@ -434,6 +481,13 @@ def price_box(r):
             f"<small>{money(p0, m)} → {money(p1, m)}</small></div>")
 
 
+def day_text(r):
+    """1일: 어느 날 장 마감 기준인지"""
+    m = r["market"]
+    d = pd.Timestamp(r["end"])
+    return f"{MKT_NAME.get(m, '')} {d.month}월 {d.day}일 장 마감 기준 (하루 동안)"
+
+
 def why_html(text):
     return f"<span class='why'>💬 {E(text)}</span>" if text else ""
 
@@ -450,6 +504,9 @@ def long_panel(rows, years):
             f"<span class='bx {'u' if b > 0 else 'd'}' title='{E(lb)}: {pct(b)}'></span>"
             for b, lb in zip(r["blocks"], r["labels"]))
         medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}")
+        ups = r["ups"]
+        count_text = day_text(r) if years == "1d" else f"{len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요" + (
+            " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else "")
         n_blocks = len(r["blocks"])
         avg = " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else ""
         items.append(
@@ -457,15 +514,15 @@ def long_panel(rows, years):
             f"<b>{E(r['name'])}</b>"
             f"<span class='tk'>{FLAG.get(r['market'], '')} {E(short_ticker(r['ticker']))} · {E(r['category'])}</span>"
             f"<div class='boxes'>{boxes}</div>"
-            f"<span class='sm'>{n_blocks}{cnt} 중 <b>{r['ups']}{cnt}</b> 올랐어요{avg}</span>"
-            f"{why_html(reason_for(r['ticker'], years))}</div>"
+            f"<span class='sm'>{count_text}</span>"
+            f"{why_html(reason_for(r['ticker'], years, r.get('end')))}</div>"
             f"{price_box(r)}"
             f"<div class='won'><small>100만 원이</small><b>{won(r['total'])}</b>"
             f"<small>{updown(r['total'])}</small></div></li>")
     lost = len(rows) - len(ranked)
     note = f"이 기간 동안 가격이 내려간 ETF {lost}개는 뺐어요. " if lost else ""
     return (f"<p class='how'>🟥 = 그 {unit}에 올랐어요 &nbsp; 🟦 = 그 {unit}에 내렸어요 "
-            f"(칸을 누르고 있으면 날짜가 보여요)<br>💬 = 그 기간에 왜 올랐는지 Claude가 뉴스를 보고 짧게 정리한 거예요 (틀릴 수 있어요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
+            f"(칸을 누르고 있으면 날짜가 보여요)<br>1일은 나라마다 그 나라 주식시장이 끝난 시각 기준이에요 (한국 오후 3:30 · 중국 오후 4시 · 홍콩 오후 5시 · 미국 아침 6시, 한국시간)<br>💬 = 그 기간에 왜 올랐는지 Claude가 뉴스를 보고 짧게 정리한 거예요 (틀릴 수 있어요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
             f"<ol class='longlist'>{''.join(items) or '<li class=empty>여기에 맞는 ETF가 없어요</li>'}</ol>")
 
 
@@ -625,7 +682,8 @@ def main():
         json.dump({"build": build}, f)
     df.to_csv(os.path.join(DOCS, "latest.csv"), index=False, encoding="utf-8-sig")
 
-    msg = phone_message(df, long, today)
+    close = os.environ.get("CLOSE_MARKET", "").upper()   # 장 마감 때 실행하면 KR/CN/HK
+    msg = close_message(df, close, today) if close else phone_message(df, long, today)
     print(msg)
 
     url = os.environ.get("DASHBOARD_URL")
@@ -638,7 +696,12 @@ def main():
     if os.environ.get("GITHUB_EVENT_NAME") == "push":
         print("코드·이유 파일을 고쳐서 다시 만든 거라 알림은 보내지 않아요.")
     elif not args.demo:
-        send_ntfy("오늘의 ETF 추천", msg, url)
+        if close:
+            if msg:
+                send_ntfy(f"{FLAG.get(close, '')} {MKT_NAME.get(close, close)}장 마감 · 오늘 많이 오른 ETF", msg,
+                          f"{url}#long-{close.lower()}-1d" if url else url)
+        else:
+            send_ntfy("오늘의 ETF 추천", msg, url)
 
 
 if __name__ == "__main__":
