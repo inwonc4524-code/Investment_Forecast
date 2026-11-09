@@ -454,6 +454,42 @@ def build_table(universe, closes):
     return score(pd.DataFrame(rows))
 
 
+def th(r):
+    """화면에서 테마로 거를 때 쓰는 값"""
+    return E(str(r.get("theme", "") or ""))
+
+
+def combo_keep(items, n, mk, th):
+    """정렬된 목록에서, (전체/나라) × (전체/테마) 조합마다 상위 n개에 드는 것만 남김"""
+    cnt, out = {}, []
+    for it in items:
+        ms = ("all", mk(it))
+        ts = [""] + [t for t in str(th(it) or "").split("|") if t]
+        keys = [(m, t) for m in ms for t in ts]
+        if any(cnt.get(k, 0) < n for k in keys):
+            out.append(it)
+        for k in keys:
+            cnt[k] = cnt.get(k, 0) + 1
+    return out
+
+
+def picks_all(df):
+    """대시보드용: 조합마다 상위 TOP_N개가 다 들어가도록 넉넉하게"""
+    full = {
+        "overall": df[df.above_ma200].sort_values("total", ascending=False),
+        "momentum": df[df.above_ma200 & (df.mom_raw > 0)].sort_values("mom_score", ascending=False),
+        "rebound": df[df.rebound_ok].sort_values("rebound_score", ascending=False),
+        "stable": df[df.stab_ok].sort_values("stab_score", ascending=False),
+    }
+    if "value_ok" in df:
+        full["value"] = df[df.value_ok].sort_values("fin_score", ascending=False)
+    out = {}
+    for k, d in full.items():
+        rows = combo_keep(list(d.iterrows()), TOP_N, lambda x: x[1].market, lambda x: x[1].get("theme", ""))
+        out[k] = d.loc[[i for i, _ in rows]]
+    return out
+
+
 def picks(df):
     return {
         "overall": df[df.above_ma200].nlargest(TOP_N, "total"),
@@ -615,15 +651,15 @@ E = html.escape
 
 def item_html(r, metric):
     hot = "<i>🔥 너무 빨리 오름</i>" if r.overheated else ""
-    return (f"<li><div><b>{E(r['name'])}</b>"
+    return (f"<li data-mk='{r.market}' data-th='{th(r)}'><div><b>{E(r['name'])}</b>"
             f"<span class='tk'>{FLAG.get(r.market, '')} {E(short_ticker(r.ticker))} · {E(r.category)}</span></div>"
             f"<span class='m'>{metric}{hot}</span></li>")
 
 
 def card(title, desc, rows, metric_fn):
-    items = "".join(item_html(r, metric_fn(r)) for _, r in rows.iterrows()) \
-        or "<li class='empty'>오늘은 여기에 맞는 ETF가 없어요</li>"
-    return f"<section class='card'><h2>{title}</h2><p>{desc}</p><ol>{items}</ol></section>"
+    items = "".join(item_html(r, metric_fn(r)) for _, r in rows.iterrows())
+    return (f"<section class='card'><h2>{title}</h2><p>{desc}</p><ol class='flt'>{items}"
+            f"<li class='empty'>오늘은 여기에 맞는 ETF가 없어요</li></ol></section>")
 
 
 def updown(v, text=None):
@@ -632,7 +668,7 @@ def updown(v, text=None):
 
 
 def recent_panel(sub, mk):
-    p = picks(sub)
+    p = picks_all(sub)
     cards = (
         card("🏆 오늘의 추천", "요즘 잘 오르면서도 너무 출렁이지 않는 ETF예요. 100점에 가까울수록 좋아요",
              p["overall"], lambda r: f"{r.total:.0f}점") +
@@ -664,11 +700,11 @@ def recent_panel(sub, mk):
 
     tid = f"t-{mk}"
     head = "".join(f"<th onclick=\"sortBy('{tid}',{i})\">{n}</th>" for i, (_, n) in enumerate(cols))
-    body = "".join("<tr>" + "".join(cell(c, r) for c, _ in cols) + "</tr>"
+    body = "".join(f"<tr data-mk='{r.market}' data-th='{th(r)}'>" + "".join(cell(c, r) for c, _ in cols) + "</tr>"
                    for _, r in sub.sort_values("total", ascending=False).iterrows())
     return (f"<div class='grid'>{cards}</div>"
             f"<h3>📋 전부 보기 <span class='hint'>맨 위 제목을 누르면 순서가 바뀌어요</span></h3>"
-            f"<div class='tbl'><table id='{tid}'><thead><tr>{head}</tr></thead>"
+            f"<div class='tbl'><table class='flt' id='{tid}'><thead><tr>{head}</tr></thead>"
             f"<tbody>{body}</tbody></table></div>")
 
 
@@ -705,7 +741,8 @@ def long_panel(rows, years):
         return (f"<p class='empty big'>여기엔 생긴 지 {pname}이 넘은 ETF가 없어요.<br>"
                 f"생긴 지 {pname}이 안 된 ETF는 계산할 수 없어요.</p>")
     items = []
-    for i, r in enumerate(ranked[:LONG_SHOW], 1):
+    keep = combo_keep(ranked, LONG_SHOW, lambda x: x['market'], lambda x: x.get('theme', ''))
+    for i, r in enumerate(keep, 1):
         boxes = "".join(
             (f"<span class='bx n' title='{E(lb)}: 장이 쉬었어요'></span>" if b is None else
              f"<span class='bx {'u' if b > 0 else 'd' if b < 0 else 'n'}' title='{E(lb)}: {pct(b)}'></span>")
@@ -718,7 +755,7 @@ def long_panel(rows, years):
         n_blocks = len(r["blocks"])
         avg = " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else ""
         items.append(
-            f"<li class='lt{' hide' if i > FIRST_SHOW else ''}'><div class='rk'>{medal}</div><div class='lb'>"
+            f"<li class='lt' data-mk='{r['market']}' data-th='{th(r)}'><div class='rk'>{medal}</div><div class='lb'>"
             f"<b>{E(r['name'])}</b>"
             f"<span class='tk'>{FLAG.get(r['market'], '')} {E(short_ticker(r['ticker']))} · {E(r['category'])}</span>"
             f"<div class='boxes'>{boxes}</div>"
@@ -727,13 +764,11 @@ def long_panel(rows, years):
             f"{price_box(r)}"
             f"<div class='won'><small>100만 원이</small><b>{won(r['total'])}</b>"
             f"<small>{updown(r['total'])}</small></div></li>")
-    lost = len(rows) - len(ranked)
-    note = f"이 기간 동안 가격이 내려간 ETF {lost}개는 뺐어요. " if lost else ""
+    note = "이 기간 동안 가격이 내려간 ETF는 뺐어요. "
     return (f"<p class='how'>🟥 = 그 {unit}에 올랐어요 &nbsp; 🟦 = 그 {unit}에 내렸어요 &nbsp; ⬜ = 장이 쉬었어요 "
             f"(칸을 누르고 있으면 날짜가 보여요)<br>1일 = 그 나라 장 시작부터 마감까지 1시간씩 · 1주 = 7일 · 1달 = 4주 · 1년 = 12달. 마감 시각은 나라마다 달라요 (한국 오후 3:30 · 중국 오후 4시 · 홍콩 오후 5시 · 미국 아침 6시, 한국시간)<br>💬 = 그 기간에 왜 올랐는지 Claude가 뉴스를 보고 짧게 정리한 거예요 (틀릴 수 있어요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
-            f"<ol class='longlist'>{''.join(items) or '<li class=empty>여기에 맞는 ETF가 없어요</li>'}</ol>"
-            + (f"<button class='more' onclick='moreList(this)'>더보기 ({len(ranked[:LONG_SHOW]) - FIRST_SHOW}개 더 · {min(len(ranked), LONG_SHOW)}위까지)</button>"
-               if len(ranked[:LONG_SHOW]) > FIRST_SHOW else ""))
+            f"<ol class='longlist'>{''.join(items)}<li class='empty'>여기에 맞는 ETF가 없어요</li></ol>"
+            f"<button class='more' onclick='moreList(this)'>더보기</button>")
 
 
 CSS = """
@@ -785,27 +820,41 @@ footer{color:var(--sub);font-size:12px;line-height:1.7;margin-top:26px}
 """
 
 JS = """
-function moreList(b){const l=b.previousElementSibling;if(l)l.classList.add('open');b.remove();}
 (function(){function chk(){fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{
  if(v&&v.build&&v.build!==BUILD){const u=new URL(location.href);if(u.searchParams.get('v')===v.build)return;
  u.searchParams.set('v',v.build);location.replace(u.toString());}}).catch(()=>{});}
 chk();document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk();});window.addEventListener('pageshow',e=>{if(e.persisted)chk();});})();
+function moreList(b){const l=b.previousElementSibling;if(l)l.classList.add('open');filt();}
 let dir={};function sortBy(id,i){const tb=document.querySelector('#'+id+' tbody');const rows=[...tb.rows];const k=id+i;dir[k]=!dir[k];
 rows.sort((a,b)=>{const x=a.cells[i],y=b.cells[i];const vx=x.dataset.v??x.textContent,vy=y.dataset.v??y.textContent;
 const nx=parseFloat(vx),ny=parseFloat(vy);const c=isNaN(nx)?String(vx).localeCompare(vy,'ko'):nx-ny;return dir[k]?-c:c;});
 rows.forEach(r=>tb.appendChild(r));}
-const st={v:'recent',m:'all',y:'5'};
-function set(k,val){st[k]=val;draw();}
+const st={v:'recent',m:'all',y:'5',t:''};
+function ok(e){return (st.m==='all'||e.dataset.mk===st.m.toUpperCase())&&(!st.t||(e.dataset.th||'').split('|').includes(st.t));}
+function filt(){
+ document.querySelectorAll('ol.flt').forEach(ol=>{let n=0;ol.querySelectorAll('li[data-mk]').forEach(li=>{const s=ok(li)&&n<CARD_N;li.style.display=s?'':'none';if(s)n++;});const em=ol.querySelector('.empty');if(em)em.style.display=n?'none':'';});
+ let rows=0;document.querySelectorAll('table.flt tbody tr').forEach(tr=>{const s=ok(tr);tr.style.display=s?'':'none';if(s)rows++;});
+ document.querySelectorAll('ol.longlist').forEach(ol=>{const open=ol.classList.contains('open');let n=0,shown=0;
+  ol.querySelectorAll('li.lt').forEach(li=>{const m=ok(li);if(m)n++;const s=m&&n<=(open?LONG_N:FIRST_N);li.style.display=s?'flex':'none';
+   if(s){shown++;const r=li.querySelector('.rk');r.textContent=n==1?'🥇':n==2?'🥈':n==3?'🥉':n;}});
+  const total=Math.min(n,LONG_N);const b=ol.nextElementSibling;
+  if(b&&b.classList.contains('more')){if(!open&&total>FIRST_N){b.style.display='';b.textContent='더보기 ('+(total-FIRST_N)+'개 더 · '+total+'위까지)';}else b.style.display='none';}
+  const em=ol.querySelector('.empty');if(em)em.style.display=n?'none':'';});
+ document.querySelectorAll('.chips').forEach(c=>{let n=0;c.querySelectorAll('.chip').forEach(x=>{const s=ok(x);x.style.display=s?'':'none';if(s)n++;});const sec=c.closest('section');if(sec)sec.style.display=n?'':'none';});
+ const d=document.getElementById('tdesc');if(d)d.textContent=(TDESC[st.t]?TDESC[st.t]+' · ':'')+rows+'개';}
+function set(k,val){if(k==='t'&&st.t===val)val='';st[k]=val;if(k!=='y'&&k!=='v')document.querySelectorAll('ol.longlist.open').forEach(o=>o.classList.remove('open'));draw();}
 function draw(){
  document.querySelectorAll('[data-set]').forEach(b=>{const [k,v]=b.dataset.set.split(':');b.classList.toggle('on',st[k]===v);});
  document.querySelectorAll('.view').forEach(e=>e.classList.toggle('on',e.dataset.v===st.v));
- document.querySelectorAll('.mk').forEach(e=>e.classList.toggle('on',e.dataset.m===st.m));
  document.querySelectorAll('.yr').forEach(e=>e.classList.toggle('on',e.dataset.y===st.y));
  document.getElementById('yrow').style.display=st.v==='long'?'flex':'none';
+ filt();
  document.querySelectorAll('.row.scroll').forEach(r=>{const b=r.querySelector('button.on');if(b)r.scrollLeft=b.offsetLeft-r.offsetLeft-(r.clientWidth-b.offsetWidth)/2;});
- history.replaceState(null,'','#'+st.v+'-'+st.m+'-'+st.y);}
+ history.replaceState(null,'','#'+st.v+'-'+st.m+'-'+st.y+(st.t?'-'+st.t:''));}
 (function(){const h=location.hash.slice(1).split('-');if(h[0]==='recent'||h[0]==='long')st.v=h[0];
-if(h[1]&&document.querySelector('[data-set="m:'+h[1]+'"]'))st.m=h[1];if(h[2])st.y=h[2];draw();})();
+const isT=x=>x&&document.querySelector('[data-set="t:'+x+'"]');
+if(h[1]&&document.querySelector('[data-set="m:'+h[1]+'"]'))st.m=h[1];else if(isT(h[1]))st.t=h[1];
+if(h[2])st.y=h[2];if(isT(h[3]))st.t=h[3];draw();})();
 """
 
 
@@ -860,24 +909,16 @@ def tab_desc(d, sub):
 def dashboard(df, long, today, demo, build=""):
     banner = "<div class='demo'>⚠ 가짜(데모) 데이터로 만든 미리보기예요</div>" if demo else ""
     tabs = tab_list(df)
-    recent = "".join(
-        f"<div class='mk' data-m='{k}'>{tab_desc(d, tab_df(df, kind, val))}"
-        f"{recent_panel(tab_df(df, kind, val), k)}</div>"
-        for k, _, kind, val, d in tabs)
-    long_html = ""
-    for k, _, kind, val, _ in tabs:
-        inner = "".join(
-            f"<div class='yr' data-y='{y}'>"
-            f"{long_panel([r for r in long[y] if tab_row(r, kind, val)], y)}</div>"
-            for y in PERIODS)
-        long_html += f"<div class='mk' data-m='{k}'>{inner}</div>"
+    recent = f"<p class='tdesc' id='tdesc'></p>{recent_panel(df, 'all')}"
+    long_html = "".join(f"<div class='yr' data-y='{y}'>{long_panel(long[y], y)}</div>" for y in PERIODS)
+    tdesc = json.dumps({k: d for k, _, kind, _, d in tabs if kind == "t"}, ensure_ascii=False)
 
     vbtn = ("<button data-set='v:recent' onclick=\"set('v','recent')\">📅 요즘 추천</button>"
             "<button data-set='v:long' onclick=\"set('v','long')\">🌱 오래 꾸준히 오른</button>")
     mbtn = "".join(f"<button data-set='m:{k}' onclick=\"set('m','{k}')\">{lb}</button>"
                    for k, lb, kind, _, _ in tabs if kind != "t")
     tbtn = "<span class='tl'>테마</span>" + "".join(
-        f"<button data-set='m:{k}' onclick=\"set('m','{k}')\">{lb}</button>"
+        f"<button data-set='t:{k}' onclick=\"set('t','{k}')\">{lb}</button>"
         for k, lb, kind, _, _ in tabs if kind == "t")
     ybtn = "".join(f"<button data-set='y:{y}' onclick=\"set('y','{y}')\">{PERIOD_INFO[y][0]}</button>"
                    for y in PERIODS)
@@ -889,7 +930,7 @@ def dashboard(df, long, today, demo, build=""):
 <b>주식</b>은 회사를 아주 잘게 나눈 조각이에요. 조각을 사면 그 회사의 주인이 조금 되는 거예요.<br>
 <b>ETF</b>는 여러 회사의 조각을 <b>한 바구니에 담은 꾸러미</b>예요. 하나만 사도 여러 회사를 한꺼번에 가진 셈이라,
 회사 하나만 살 때보다 덜 출렁여요.<br>
-기본은 <b>전체 · 나라별</b>로 보고, 그 아래 <b>테마</b> 버튼(반도체·배당·채권처럼 비슷한 ETF 묶음)을 누르면 그 테마만 볼 수 있어요. 테마 버튼은 옆으로 밀면 더 있어요.<br>
+기본은 <b>전체 · 나라별</b>로 보고, 나라를 고른 채로 그 아래 <b>테마</b> 버튼(반도체·배당·채권처럼 비슷한 ETF 묶음)을 누르면 그 나라의 그 테마 순위만 볼 수 있어요. 테마를 한 번 더 누르면 해제돼서 그 나라 전체 순위가 보여요. 테마 버튼은 옆으로 밀면 더 있어요.<br>
 점수는 100점에 가까울수록 좋아요.<br>
 <b>🇨🇳 중국 · 🇭🇰 홍콩 탭</b>에는 그 나라에 상장된 ETF와 함께, 중국·홍콩에 투자하는 <b>한국 상장 ETF(🇰🇷 표시)</b>도 나와요. 🇰🇷 표시는 한국 증권 계좌로 바로 살 수 있어요.<br><br>
 <b>📅 요즘 추천</b> (최근 몇 달 동안의 가격을 보고 골랐어요)<br>
@@ -924,7 +965,7 @@ def dashboard(df, long, today, demo, build=""):
 '100만 원이 → 얼마'는 그 기간 처음에 100만 원어치 샀다면 지금 얼마가 됐을지 보여줘요.<br>
 ⚠ 지나간 숫자로 계산한 참고용이에요. 앞으로도 똑같이 오른다는 약속도, 사라는 뜻도 아니에요.
 </footer></main>
-<script>const BUILD="{build}";{JS}</script></body></html>"""
+<script>const BUILD="{build}";const TDESC={tdesc};const CARD_N={TOP_N},FIRST_N={FIRST_SHOW},LONG_N={LONG_SHOW};{JS}</script></body></html>"""
 
 
 # ───────────────────────── 7. 실행 ─────────────────────────
