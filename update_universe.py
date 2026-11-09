@@ -94,7 +94,10 @@ def save(rows):
 KR_TAB = {1: "국내 시장지수", 2: "국내 업종·테마", 3: "국내 파생", 4: "해외 주식", 5: "원자재", 6: "채권", 7: "기타"}
 
 
-def kr_top():
+CHINA_KR = re.compile(r"차이나|중국|항셍|홍콩|HSCEI|China|Hang\s?Seng|과창판|심천|CSI300|A50", re.I)
+
+
+def kr_top(limit=None):
     url = "https://finance.naver.com/api/sise/etfItemList.nhn?etfType=0&targetColumn=market_sum&sortOrder=desc"
     r = requests.get(url, headers=UA, timeout=30)
     r.encoding = r.encoding if r.encoding and r.encoding.lower() != "iso-8859-1" else "euc-kr"
@@ -112,7 +115,12 @@ def kr_top():
                     "category": KR_TAB.get(tab, "국내 ETF")})
     out = [x for x in out if x["cap"] == x["cap"]]
     out.sort(key=lambda x: x["cap"], reverse=True)
-    return out[:KR_TOP]
+    return out if limit == 0 else out[:KR_TOP]
+
+
+def kr_china():
+    """한국에 상장된 중국·홍콩 투자 ETF 전부 (레버리지·인버스 등은 SKIP 규칙으로 빠짐)"""
+    return [x for x in kr_top(limit=0) if CHINA_KR.search(x["name"])]
 
 
 # ───────── 미국 ETF: 운용자산 순위 ─────────
@@ -150,6 +158,17 @@ def main():
             added.append(f"🇰🇷 {x['name']}")
     except Exception as e:
         print("한국 ETF 순위 업데이트 실패:", e)
+    try:
+        for x in kr_china():
+            if x["ticker"] in have:
+                continue
+            where = "홍콩" if re.search(r"항셍|홍콩|HSCEI|차이나H|Hang\s?Seng", x["name"], re.I) else "중국"
+            rows.append({"ticker": x["ticker"], "name": x["name"], "market": "KR",
+                         "category": f"{where} 투자 (한국 상장)", "theme": themes_for(x["name"])})
+            have.add(x["ticker"])
+            added.append(f"🇰🇷→{where} {x['name']}")
+    except Exception as e:
+        print("한국 상장 중국·홍콩 ETF 추가 실패:", e)
     try:
         for x in us_top():
             if x["ticker"] in have:

@@ -15,6 +15,7 @@ ETF 추천 봇
 import argparse
 import html
 import json
+import re
 import os
 import sys
 from datetime import datetime, timedelta, timezone
@@ -808,6 +809,20 @@ if(h[1]&&document.querySelector('[data-set="m:'+h[1]+'"]'))st.m=h[1];if(h[2])st.
 """
 
 
+KR_TO_HK = re.compile(r"항셍|홍콩|HSCEI|차이나H|Hang\s?Seng", re.I)
+KR_TO_CN = re.compile(r"차이나|중국|China|CSI|과창판|심천|A50", re.I)
+
+
+def kr_link(name):
+    """한국에 상장된 중국·홍콩 투자 ETF → 'HK' 또는 'CN' (중국·홍콩 탭에도 보여주려고)"""
+    name = str(name)
+    if KR_TO_HK.search(name):
+        return "HK"
+    if KR_TO_CN.search(name):
+        return "CN"
+    return None
+
+
 def tab_list(df):
     """탭: 전체 · 나라별 · (선택) 테마별"""
     tabs = [("all", "전체", None, None, "")]
@@ -818,6 +833,8 @@ def tab_list(df):
 
 def tab_df(df, kind, val):
     if kind == "m":
+        if val in ("CN", "HK"):
+            return df[(df.market == val) | ((df.market == "KR") & (df["name"].map(kr_link) == val))]
         return df[df.market == val]
     if kind == "t":
         return in_theme(df, val)
@@ -826,6 +843,8 @@ def tab_df(df, kind, val):
 
 def tab_row(r, kind, val):
     if kind == "m":
+        if val in ("CN", "HK") and r["market"] == "KR":
+            return kr_link(r["name"]) == val
         return r["market"] == val
     if kind == "t":
         return val in str(r.get("theme", "") or "").split("|")
@@ -869,7 +888,8 @@ def dashboard(df, long, today, demo, build=""):
 <b>ETF</b>는 여러 회사의 조각을 <b>한 바구니에 담은 꾸러미</b>예요. 하나만 사도 여러 회사를 한꺼번에 가진 셈이라,
 회사 하나만 살 때보다 덜 출렁여요.<br>
 기본은 <b>전체 · 나라별</b>로 보고, 그 아래 <b>테마</b> 버튼(반도체·배당·채권처럼 비슷한 ETF 묶음)을 누르면 그 테마만 볼 수 있어요. 테마 버튼은 옆으로 밀면 더 있어요.<br>
-점수는 100점에 가까울수록 좋아요.<br><br>
+점수는 100점에 가까울수록 좋아요.<br>
+<b>🇨🇳 중국 · 🇭🇰 홍콩 탭</b>에는 그 나라에 상장된 ETF와 함께, 중국·홍콩에 투자하는 <b>한국 상장 ETF(🇰🇷 표시)</b>도 나와요. 🇰🇷 표시는 한국 증권 계좌로 바로 살 수 있어요.<br><br>
 <b>📅 요즘 추천</b> (최근 몇 달 동안의 가격을 보고 골랐어요)<br>
 &nbsp;&nbsp;🏆 오늘의 추천: 잘 오르면서 너무 출렁이지 않는 것<br>
 &nbsp;&nbsp;🚀 쑥쑥 오르는 중: 요즘 가격이 많이 오른 것<br>
