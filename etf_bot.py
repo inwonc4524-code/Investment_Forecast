@@ -816,6 +816,8 @@ KR_TO_CN = re.compile(r"차이나|중국|China|CSI|과창판|심천|A50", re.I)
 def kr_link(name):
     """한국에 상장된 중국·홍콩 투자 ETF → 'HK' 또는 'CN' (중국·홍콩 탭에도 보여주려고)"""
     name = str(name)
+    if re.search(r"ex[\s-]?China", name, re.I):     # '중국 제외' ETF
+        return None
     if KR_TO_HK.search(name):
         return "HK"
     if KR_TO_CN.search(name):

@@ -120,7 +120,8 @@ def kr_top(limit=None):
 
 def kr_china():
     """한국에 상장된 중국·홍콩 투자 ETF 전부 (레버리지·인버스 등은 SKIP 규칙으로 빠짐)"""
-    return [x for x in kr_top(limit=0) if CHINA_KR.search(x["name"])]
+    return [x for x in kr_top(limit=0)
+            if CHINA_KR.search(x["name"]) and not re.search(r"ex[\s-]?China", x["name"], re.I)]
 
 
 # ───────── 미국 ETF: 운용자산 순위 ─────────
