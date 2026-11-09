@@ -103,6 +103,32 @@ TZ_BY_SUFFIX = {".KS": "Asia/Seoul", ".KQ": "Asia/Seoul", ".SS": "Asia/Shanghai"
                 ".TW": "Asia/Taipei", ".TWO": "Asia/Taipei", ".SI": "Asia/Singapore"}
 
 
+CLOSE_LOCAL = {"Asia/Seoul": "15:30", "Asia/Shanghai": "15:00", "Asia/Hong_Kong": "16:00",
+               "Asia/Tokyo": "15:30", "Asia/Taipei": "13:30", "Asia/Singapore": "17:00",
+               "America/New_York": "16:00"}   # 정규장 마감 (그 나라 시간)
+
+
+def fill_close(t, it):
+    """야후가 마지막 30분 등을 빼고 줄 때가 있어서, 그날 실제 마감 가격으로 마지막 칸을 채움"""
+    real = RAW.get(t)
+    if real is None or real.empty:
+        return
+    day = it["date"].normalize()
+    same = real[real.index.normalize() == day]
+    if same.empty:
+        return
+    final = float(same.iloc[-1])
+    last = it["times"][-1]
+    hh, mm = CLOSE_LOCAL[local_tz(t)].split(":")
+    close_t = last.normalize() + pd.Timedelta(hours=int(hh), minutes=int(mm))
+    if last + pd.Timedelta(hours=1) < close_t:      # 마감 전에 빈 시간이 있음 → 칸 추가
+        it["close"].append(final)
+        it["times"].append(last + pd.Timedelta(hours=1))
+        it["tail"] = True
+    else:                                           # 마지막 칸이 마감까지 → 마감 가격으로 맞춤
+        it["close"][-1] = final
+
+
 def local_tz(ticker):
     """종목코드 끝(.KS 등)을 보고 그 나라 시간대를 정함. 끝이 없으면 미국."""
     for suf, tz in TZ_BY_SUFFIX.items():
@@ -140,6 +166,11 @@ def fetch_intraday(tickers):
                 continue
             INTRA[t] = {"date": pd.Timestamp(last), "open": float(day.Open.iloc[0]),
                         "close": [float(x) for x in day.Close], "times": list(day.index)}
+        except Exception:
+            pass
+    for t, it in INTRA.items():
+        try:
+            fill_close(t, it)
         except Exception:
             pass
     print(f"시간별 가격을 받은 곳: {len(INTRA)}/{len(tickers)}")
@@ -184,7 +215,15 @@ def intraday_term(ticker, s=None):
     o, cl = it["open"], it["close"]
     prev = [o] + cl[:-1]
     blocks = [c / p - 1 for c, p in zip(cl, prev)]
-    labels = [f"{t:%H:%M}부터 1시간" for t in it["times"]]
+    close_hm = CLOSE_LOCAL[local_tz(ticker)]
+    hh, mm = map(int, close_hm.split(":"))
+
+    def lab(t):
+        end = t.normalize() + pd.Timedelta(hours=hh, minutes=mm)
+        if t + pd.Timedelta(hours=1) > end:      # 1시간이 안 되는 마지막 칸
+            return f"{t:%H:%M}부터 마감까지 ({close_hm})"
+        return f"{t:%H:%M}부터 1시간"
+    labels = [lab(t) for t in it["times"]]
     return {"total": cl[-1] / o - 1, "cagr": np.nan, "blocks": blocks, "labels": labels,
             "ups": sum(b > 0 for b in blocks), "start": it["date"], "end": it["date"],
             "p0": o, "p1": cl[-1], "is1d": True}
