@@ -53,7 +53,7 @@ THEME_WORDS = [
     (r"방산|조선|Defense|Aerospace", "defense"),
     (r"배당|Dividend|고배당|Income|커버드콜|Covered", "div"),
     (r"골드|금현물|금선물|KRX금|Gold|Silver|실버|원유|WTI|\bOil\b|Commodit|원자재", "gold"),
-    (r"채권|국채|국고채|회사채|Treasury|Bond|Aggregate|TIPS|Muni|Corporate", "bond"),
+    (r"채권|국채|국고채|회사채|TDF|TRF|Treasury|Bond|Aggregate|TIPS|Muni|Corporate", "bond"),
     (r"일본|인도|중국|베트남|대만|유럽|Japan|India|China|Taiwan|Europe|Emerging|Developed|International|ex-US|EAFE", "world"),
 ]
 
