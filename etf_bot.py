@@ -964,7 +964,7 @@ let dir={};function sortBy(id,i){const tb=document.querySelector('#'+id+' tbody'
 rows.sort((a,b)=>{const x=a.cells[i],y=b.cells[i];const vx=x.dataset.v??x.textContent,vy=y.dataset.v??y.textContent;
 const nx=parseFloat(vx),ny=parseFloat(vy);const c=isNaN(nx)?String(vx).localeCompare(vy,'ko'):nx-ny;return dir[k]?-c:c;});
 rows.forEach(r=>tb.appendChild(r));}
-const st={v:'recent',m:'all',y:'5',t:''};
+const st={v:'long',m:'all',y:'1d',t:''};   // 처음 열면 🌱 1일 순위부터
 function ok(e){const M=st.m.toUpperCase();return (st.m==='all'||e.dataset.mk===M||e.dataset.lk===M)&&(!st.t||(e.dataset.th||'').split('|').includes(st.t));}
 function filt(){
  document.querySelectorAll('ol.flt').forEach(ol=>{let n=0;ol.querySelectorAll('li[data-mk]').forEach(li=>{const s=ok(li)&&n<CARD_N;li.style.display=s?'':'none';if(s)n++;});const em=ol.querySelector('.empty');if(em)em.style.display=n?'none':'';});
