@@ -357,7 +357,7 @@ def top_up_recent(closes, tickers):
     CHECK["stale_fixed"] += filled
     # 그래도 다른 종목보다 2일 넘게 밀린 종목은 하나씩 따로 받아봄
     newest = max(s.index[-1] for s in closes.values())
-    stale = [t for t, s in closes.items() if len(pd.bdate_range(s.index[-1], newest)) > 3]
+    stale = [t for t, s in closes.items() if len(pd.bdate_range(s.index[-1], newest)) >= 3]
     for t in stale:
         try:
             h = yf.Ticker(t).history(period="1mo", auto_adjust=False)
