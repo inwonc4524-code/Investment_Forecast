@@ -1133,7 +1133,8 @@ def dashboard(df, long, today, demo, build=""):
             "<button data-set='v:long' onclick=\"set('v','long')\">🌱 오래 꾸준히 오른</button>")
     mbtn = "".join(f"<button data-set='m:{k}' onclick=\"set('m','{k}')\">{lb}</button>"
                    for k, lb, kind, _, _ in tabs if kind != "t")
-    tbtn = "<span class='tl'>테마</span>" + "".join(
+    tbtn = ("<span class='tl'>테마</span>"
+            "<button data-set='t:' onclick=\"set('t','')\">전체</button>") + "".join(
         f"<button data-set='t:{k}' onclick=\"set('t','{k}')\">{lb}</button>"
         for k, lb, kind, _, _ in tabs if kind == "t")
     ybtn = "".join(f"<button data-set='y:{y}' onclick=\"set('y','{y}')\">{PERIOD_INFO[y][0]}</button>"
@@ -1146,7 +1147,7 @@ def dashboard(df, long, today, demo, build=""):
 <b>주식</b>은 회사를 아주 잘게 나눈 조각이에요. 조각을 사면 그 회사의 주인이 조금 되는 거예요.<br>
 <b>ETF</b>는 여러 회사의 조각을 <b>한 바구니에 담은 꾸러미</b>예요. 하나만 사도 여러 회사를 한꺼번에 가진 셈이라,
 회사 하나만 살 때보다 덜 출렁여요.<br>
-기본은 <b>전체 · 나라별</b>로 보고, 나라를 고른 채로 그 아래 <b>테마</b> 버튼(반도체·배당·채권처럼 비슷한 ETF 묶음)을 누르면 그 나라의 그 테마 순위만 볼 수 있어요. 테마를 한 번 더 누르면 해제돼서 그 나라 전체 순위가 보여요. 테마 버튼은 옆으로 밀면 더 있어요.<br>
+기본은 <b>전체 · 나라별</b>로 보고, 나라를 고른 채로 그 아래 <b>테마</b> 버튼(반도체·배당·채권처럼 비슷한 ETF 묶음)을 누르면 그 나라의 그 테마 순위만 볼 수 있어요. 맨 왼쪽 <b>전체</b>를 누르거나 테마를 한 번 더 누르면 해제돼서 그 나라 전체 순위가 보여요. 테마 버튼은 옆으로 밀면 더 있어요.<br>
 점수는 100점에 가까울수록 좋아요.<br>
 <b>나라 탭</b>(중국·홍콩·일본·독일·싱가포르·캐나다·영국)에는 그 나라에 상장된 ETF와 함께, 그 나라에 투자하는 <b>한국 상장 ETF(🇰🇷 표시)</b>도 나와요. 나라 버튼은 옆으로 밀면 더 있어요. 🇰🇷 표시는 한국 증권 계좌로 바로 살 수 있어요.<br><br>
 <b>📅 요즘 추천</b> (최근 몇 달 동안의 가격을 보고 골랐어요)<br>
