@@ -1,0 +1,15 @@
+{
+ "source_ok": 176,
+ "source_none": 150,
+ "fixed_last": [],
+ "excluded": [
+  "TIGER MSCI Korea TR (1일,1주,1달,1년)",
+  "TIGER 배당커버드콜액티브 (1년)"
+ ],
+ "no_source_markets": [
+  "CA",
+  "CN",
+  "GB",
+  "SG"
+ ]
+}
