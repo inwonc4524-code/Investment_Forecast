@@ -322,3 +322,61 @@ DFUS,Dimensional U.S. Equity Market ETF,US,Large Blend,
 0154H0.KS,KoAct 차이나바이오헬스케어액티브,KR,중국 투자 (한국 상장),bio
 0128D0.KS,PLUS 차이나항셍테크위클리타겟커버드콜,KR,홍콩 투자 (한국 상장),tech|div
 0131A0.KS,SOL 차이나소비트렌드,KR,중국 투자 (한국 상장),
+1321.T,NEXT FUNDS 닛케이225,JP,일본 대형주(닛케이225),
+1330.T,닛코 닛케이225,JP,일본 대형주(닛케이225),
+1306.T,NEXT FUNDS TOPIX,JP,일본 전체시장(TOPIX),
+1348.T,MAXIS TOPIX,JP,일본 전체시장(TOPIX),
+1475.T,iShares Core TOPIX,JP,일본 전체시장(TOPIX),
+2516.T,도쿄 그로스마켓 250,JP,일본 성장주,
+2644.T,Global X 일본 반도체,JP,일본 반도체,semi
+1615.T,NEXT FUNDS TOPIX 은행,JP,일본 은행,
+1489.T,NEXT FUNDS 닛케이 고배당50,JP,일본 배당,div
+1478.T,iShares MSCI 일본 고배당,JP,일본 배당,div
+1343.T,NEXT FUNDS 일본 리츠,JP,일본 부동산(리츠),div
+1545.T,NEXT FUNDS 나스닥100,JP,미국 기술주(엔화),tech
+2558.T,MAXIS 미국 S&P500,JP,미국 대형주(엔화),sp500
+1540.T,일본 금 현물,JP,금,gold
+EXS1.DE,iShares Core DAX,DE,독일 대형주(DAX),
+XDAX.DE,Xtrackers DAX,DE,독일 대형주(DAX),
+EXW1.DE,iShares EURO STOXX 50,DE,유럽 대형주(유로스톡스50),world
+EXSA.DE,iShares STOXX Europe 600,DE,유럽 전체시장,world
+EXV1.DE,iShares STOXX Europe 600 은행,DE,유럽 은행,world
+SXR8.DE,iShares Core S&P 500,DE,미국 대형주(유로),sp500
+SXRV.DE,iShares 나스닥100,DE,미국 기술주(유로),tech
+EUNL.DE,iShares Core MSCI World,DE,선진국 전체,world
+VWCE.DE,Vanguard FTSE All-World,DE,전 세계,world
+IS3N.DE,iShares Core MSCI 신흥국,DE,신흥국,world
+IQQH.DE,iShares 글로벌 클린에너지,DE,친환경 에너지,ess
+4GLD.DE,Xetra-Gold,DE,금,gold
+ES3.SI,SPDR 스트레이츠타임스지수,SG,싱가포르 대형주(STI),
+G3B.SI,Nikko AM 스트레이츠타임스지수,SG,싱가포르 대형주(STI),
+CLR.SI,Lion-Phillip 싱가포르 리츠,SG,싱가포르 부동산(리츠),div
+CFA.SI,Nikko AM 아시아 리츠,SG,아시아 부동산(리츠),div
+A35.SI,ABF 싱가포르 채권,SG,싱가포르 채권,bond
+MBH.SI,Nikko AM 싱가포르 회사채,SG,싱가포르 회사채,bond
+S27.SI,SPDR S&P 500 (싱가포르),SG,미국 대형주(달러),sp500
+O87.SI,SPDR Gold (싱가포르),SG,금,gold
+XIU.TO,iShares S&P/TSX 60,CA,캐나다 대형주(TSX60),
+XIC.TO,iShares Core S&P/TSX 종합,CA,캐나다 전체시장,
+ZEB.TO,BMO 캐나다 은행 동일가중,CA,캐나다 은행,
+XEI.TO,iShares S&P/TSX 고배당,CA,캐나다 배당,div
+VDY.TO,Vanguard 캐나다 고배당,CA,캐나다 배당,div
+XEG.TO,iShares S&P/TSX 에너지,CA,캐나다 에너지,
+XGD.TO,iShares S&P/TSX 금광,CA,금광 회사,gold
+ZAG.TO,BMO 캐나다 종합채권,CA,캐나다 채권,bond
+VFV.TO,Vanguard S&P 500 (캐나다),CA,미국 대형주(캐나다달러),sp500
+XQQ.TO,iShares 나스닥100 (환헤지),CA,미국 기술주(캐나다달러),tech
+XEQT.TO,iShares 주식 올인원,CA,전 세계 주식,world
+VEQT.TO,Vanguard 주식 올인원,CA,전 세계 주식,world
+ISF.L,iShares Core FTSE 100,GB,영국 대형주(FTSE100),
+VUKE.L,Vanguard FTSE 100,GB,영국 대형주(FTSE100),
+VMID.L,Vanguard FTSE 250,GB,영국 중형주(FTSE250),
+IUKD.L,iShares 영국 배당,GB,영국 배당,div
+IUKP.L,iShares 영국 부동산,GB,영국 부동산,
+IGLT.L,iShares 영국 국채,GB,영국 국채,bond
+VUSA.L,Vanguard S&P 500 (영국),GB,미국 대형주(파운드),sp500
+EQQQ.L,Invesco 나스닥100 (영국),GB,미국 기술주(파운드),tech
+VWRL.L,Vanguard FTSE All-World (영국),GB,전 세계,world
+SWDA.L,iShares Core MSCI World (영국),GB,선진국 전체,world
+INRG.L,iShares 글로벌 클린에너지 (영국),GB,친환경 에너지,ess
+SGLN.L,iShares 금 현물 (영국),GB,금,gold

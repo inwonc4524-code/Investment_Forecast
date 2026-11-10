@@ -1,6 +1,6 @@
 """
 ETF 추천 봇
-- etfs.csv 에 적힌 한국·미국·중국·홍콩 ETF의 가격을 받아와서
+- etfs.csv 에 적힌 한국·미국·중국·홍콩·일본·독일·싱가포르·캐나다·영국 ETF의 가격을 받아와서
   ① 요즘 추천 (쑥쑥 오르는 중 / 쉬는 중 / 천천히 꾸준히)
   ② 오래 꾸준히 오른 ETF (1·3·5·10·20년)
   를 계산하고, 휴대폰(ntfy)으로 요약을 보내고, docs/index.html 대시보드를 만듭니다.
@@ -39,7 +39,10 @@ PERIOD_INFO = {   # 기간: (버튼 이름, 칸 하나의 단위, 세는 말, �
 }
 
 MARKETS = [("KR", "🇰🇷", "한국"), ("US", "🇺🇸", "미국"),
-           ("CN", "🇨🇳", "중국"), ("HK", "🇭🇰", "홍콩")]
+           ("CN", "🇨🇳", "중국"), ("HK", "🇭🇰", "홍콩"), ("JP", "🇯🇵", "일본"),
+           ("DE", "🇩🇪", "독일"), ("SG", "🇸🇬", "싱가포르"), ("CA", "🇨🇦", "캐나다"),
+           ("GB", "🇬🇧", "영국")]
+FIRST_MARKETS = ("KR", "US", "CN", "HK")   # 아침 알림에 자세히 보여주는 나라 (나머지는 1등만)
 FLAG = {c: f for c, f, _ in MARKETS}
 
 THEMES = [   # 선택해서 보는 테마 탭 — etfs.csv 의 theme 칸에 key를 적어요 (여러 개면 | 로)
@@ -68,8 +71,10 @@ def in_theme(df, key):
 
 # ───────────────────────── 1. 데이터 받아오기 ─────────────────────────
 
-CLOSE_KST = {"KR": "15:30", "US": "06:00", "CN": "16:00", "HK": "17:00"}   # 각 나라 장 마감 (한국시간)
-MKT_NAME = {"KR": "한국", "US": "미국", "CN": "중국", "HK": "홍콩"}
+CLOSE_KST = {"KR": "15:30", "US": "06:00", "CN": "16:00", "HK": "17:00", "JP": "15:30",
+             "DE": "01:30", "SG": "18:00", "CA": "06:00", "GB": "01:30"}   # 각 나라 장 마감 (한국시간)
+MKT_NAME = {"KR": "한국", "US": "미국", "CN": "중국", "HK": "홍콩", "JP": "일본",
+            "DE": "독일", "SG": "싱가포르", "CA": "캐나다", "GB": "영국"}
 
 
 def load_universe():
@@ -83,6 +88,18 @@ def load_universe():
 RAW = {}   # 실제 가격(배당 조정 안 한 종가) — '실제 가격으로 얼마 올랐나' 표시에 사용
 
 
+def fix_pence(s):
+    """영국(.L) 가격: 야후가 파운드와 펜스(1/100 파운드)를 섞어서 줄 때가 있어 100배 튀는 날을 맞춤"""
+    if s.empty:
+        return s
+    ref = s.rolling(20, min_periods=1).median().shift(1).fillna(s.iloc[0])
+    r = s / ref
+    s = s.copy()
+    s[r > 30] = s[r > 30] / 100
+    s[r < 1 / 30] = s[r < 1 / 30] * 100
+    return s
+
+
 def _pick(raw, key, name):
     """다운로드 결과에서 수익률 계산용(배당 포함 수정종가)을 돌려주고, 실제 가격은 RAW에 저장"""
     d = raw[key] if isinstance(raw.columns, pd.MultiIndex) else raw
@@ -90,6 +107,8 @@ def _pick(raw, key, name):
     real = real[real > 0]
     adj = (d["Adj Close"] if "Adj Close" in d else d["Close"]).dropna()
     adj = adj[adj > 0]
+    if str(name).endswith(".L"):
+        real, adj = fix_pence(real), fix_pence(adj)
     if len(real):
         RAW[name] = real
     return adj
@@ -101,10 +120,12 @@ INTRA = {}   # 1일: 마지막 장날의 1시간 단위 가격 {"date", "open", 
 MIN_HOURS = 3   # 1일 화면: 1시간 칸이 이보다 적게 오면 '하루 전체' 한 칸으로 보여줌
 TZ_BY_SUFFIX = {".KS": "Asia/Seoul", ".KQ": "Asia/Seoul", ".SS": "Asia/Shanghai",
                 ".SZ": "Asia/Shanghai", ".HK": "Asia/Hong_Kong", ".T": "Asia/Tokyo",
-                ".TW": "Asia/Taipei", ".TWO": "Asia/Taipei", ".SI": "Asia/Singapore"}
+                ".TW": "Asia/Taipei", ".DE": "Europe/Berlin", ".L": "Europe/London",
+                ".TO": "America/Toronto", ".TWO": "Asia/Taipei", ".SI": "Asia/Singapore"}
 
 
-CLOSE_LOCAL = {"Asia/Seoul": "15:30", "Asia/Shanghai": "15:00", "Asia/Hong_Kong": "16:00",
+CLOSE_LOCAL = {"Europe/Berlin": "17:30", "Europe/London": "16:30", "America/Toronto": "16:00",
+               "Asia/Seoul": "15:30", "Asia/Shanghai": "15:00", "Asia/Hong_Kong": "16:00",
                "Asia/Tokyo": "15:30", "Asia/Taipei": "13:30", "Asia/Singapore": "17:00",
                "America/New_York": "16:00"}   # 정규장 마감 (그 나라 시간)
 
@@ -528,6 +549,16 @@ def money(v, market):
         return f"{v:,.2f}위안"
     if market == "HK":
         return f"HK${v:,.2f}"
+    if market == "JP":
+        return f"{v:,.0f}엔"
+    if market == "DE":
+        return f"€{v:,.2f}"
+    if market == "SG":
+        return f"S${v:,.2f}"
+    if market == "CA":
+        return f"C${v:,.2f}"
+    if market == "GB":
+        return f"{v:,.2f}펜스" if v >= 100 else f"£{v:,.2f}"
     return f"{v:,.2f}"
 
 
@@ -562,11 +593,17 @@ def won(total):
 
 def phone_message(df, long, today):
     out = [f"📅 {today} 기준"]
+    others = []
     for code, flag, label in MARKETS:
         sub = df[df.market == code]
         if sub.empty:
             continue
         p = picks(sub)
+        if code not in FIRST_MARKETS:
+            if not p["overall"].empty:
+                r = p["overall"].iloc[0]
+                others.append(f"{flag} {label}: {r['name']} {r.total:.0f}점{' 🔥' if r.overheated else ''}")
+            continue
         out.append(f"\n{flag} {label}")
         for icon, key, extra in [
             ("🏆 오늘의 추천", "overall", lambda r: f"{r.total:.0f}점"),
@@ -581,6 +618,9 @@ def phone_message(df, long, today):
                 r = rows.iloc[0]
                 hot = " 🔥" if r.overheated else ""
                 out.append(f"{icon}: {r['name']} ({short_ticker(r.ticker)}) {extra(r)}{hot}")
+    if others:
+        out.append("\n🌍 다른 나라 오늘의 추천 1등")
+        out += others
     best = long_rank(long.get(10, []))
     if best:
         b = best[0]
@@ -651,7 +691,7 @@ E = html.escape
 
 def item_html(r, metric):
     hot = "<i>🔥 너무 빨리 오름</i>" if r.overheated else ""
-    return (f"<li data-mk='{r.market}' data-th='{th(r)}'><div><b>{E(r['name'])}</b>"
+    return (f"<li data-mk='{r.market}' data-lk='{lk(r)}' data-th='{th(r)}'><div><b>{E(r['name'])}</b>"
             f"<span class='tk'>{FLAG.get(r.market, '')} {E(short_ticker(r.ticker))} · {E(r.category)}</span></div>"
             f"<span class='m'>{metric}{hot}</span></li>")
 
@@ -700,7 +740,7 @@ def recent_panel(sub, mk):
 
     tid = f"t-{mk}"
     head = "".join(f"<th onclick=\"sortBy('{tid}',{i})\">{n}</th>" for i, (_, n) in enumerate(cols))
-    body = "".join(f"<tr data-mk='{r.market}' data-th='{th(r)}'>" + "".join(cell(c, r) for c, _ in cols) + "</tr>"
+    body = "".join(f"<tr data-mk='{r.market}' data-lk='{lk(r)}' data-th='{th(r)}'>" + "".join(cell(c, r) for c, _ in cols) + "</tr>"
                    for _, r in sub.sort_values("total", ascending=False).iterrows())
     return (f"<div class='grid'>{cards}</div>"
             f"<h3>📋 전부 보기 <span class='hint'>맨 위 제목을 누르면 순서가 바뀌어요</span></h3>"
@@ -755,7 +795,7 @@ def long_panel(rows, years):
         n_blocks = len(r["blocks"])
         avg = " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else ""
         items.append(
-            f"<li class='lt' data-mk='{r['market']}' data-th='{th(r)}'><div class='rk'>{medal}</div><div class='lb'>"
+            f"<li class='lt' data-mk='{r['market']}' data-lk='{lk(r)}' data-th='{th(r)}'><div class='rk'>{medal}</div><div class='lb'>"
             f"<b>{E(r['name'])}</b>"
             f"<span class='tk'>{FLAG.get(r['market'], '')} {E(short_ticker(r['ticker']))} · {E(r['category'])}</span>"
             f"<div class='boxes'>{boxes}</div>"
@@ -766,7 +806,7 @@ def long_panel(rows, years):
             f"<small>{updown(r['total'])}</small></div></li>")
     note = "이 기간 동안 가격이 내려간 ETF는 뺐어요. "
     return (f"<p class='how'>🟥 = 그 {unit}에 올랐어요 &nbsp; 🟦 = 그 {unit}에 내렸어요 &nbsp; ⬜ = 장이 쉬었어요 "
-            f"(칸을 누르고 있으면 날짜가 보여요)<br>1일 = 그 나라 장 시작부터 마감까지 1시간씩 · 1주 = 7일 · 1달 = 4주 · 1년 = 12달. 마감 시각은 나라마다 달라요 (한국 오후 3:30 · 중국 오후 4시 · 홍콩 오후 5시 · 미국 아침 6시, 한국시간)<br>💬 = 그 기간에 왜 올랐는지 Claude가 뉴스를 보고 짧게 정리한 거예요 (틀릴 수 있어요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
+            f"(칸을 누르고 있으면 날짜가 보여요)<br>1일 = 그 나라 장 시작부터 마감까지 1시간씩 · 1주 = 7일 · 1달 = 4주 · 1년 = 12달. 마감 시각은 나라마다 달라요 (한국시간: 한국·일본 오후 3:30 · 중국 오후 4시 · 홍콩 오후 5시 · 싱가포르 오후 6시 · 독일·영국 새벽 1:30 · 미국·캐나다 아침 6시)<br>💬 = 그 기간에 왜 올랐는지 Claude가 뉴스를 보고 짧게 정리한 거예요 (틀릴 수 있어요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
             f"<ol class='longlist'>{''.join(items)}<li class='empty'>여기에 맞는 ETF가 없어요</li></ol>"
             f"<button class='more' onclick='moreList(this)'>더보기</button>")
 
@@ -830,7 +870,7 @@ rows.sort((a,b)=>{const x=a.cells[i],y=b.cells[i];const vx=x.dataset.v??x.textCo
 const nx=parseFloat(vx),ny=parseFloat(vy);const c=isNaN(nx)?String(vx).localeCompare(vy,'ko'):nx-ny;return dir[k]?-c:c;});
 rows.forEach(r=>tb.appendChild(r));}
 const st={v:'recent',m:'all',y:'5',t:''};
-function ok(e){return (st.m==='all'||e.dataset.mk===st.m.toUpperCase())&&(!st.t||(e.dataset.th||'').split('|').includes(st.t));}
+function ok(e){const M=st.m.toUpperCase();return (st.m==='all'||e.dataset.mk===M||e.dataset.lk===M)&&(!st.t||(e.dataset.th||'').split('|').includes(st.t));}
 function filt(){
  document.querySelectorAll('ol.flt').forEach(ol=>{let n=0;ol.querySelectorAll('li[data-mk]').forEach(li=>{const s=ok(li)&&n<CARD_N;li.style.display=s?'':'none';if(s)n++;});const em=ol.querySelector('.empty');if(em)em.style.display=n?'none':'';});
  let rows=0;document.querySelectorAll('table.flt tbody tr').forEach(tr=>{const s=ok(tr);tr.style.display=s?'':'none';if(s)rows++;});
@@ -858,8 +898,16 @@ if(h[2])st.y=h[2];if(isT(h[3]))st.t=h[3];draw();})();
 """
 
 
-KR_TO_HK = re.compile(r"항셍|홍콩|HSCEI|차이나H|Hang\s?Seng", re.I)
-KR_TO_CN = re.compile(r"차이나|중국|China|CSI|과창판|심천|A50", re.I)
+KR_LINKS = [   # 한국 상장 ETF 이름 → 그 나라 탭에도 보여줌 (위에서부터 먼저 맞는 것)
+    ("HK", re.compile(r"항셍|홍콩|HSCEI|차이나H|Hang\s?Seng", re.I)),
+    ("CN", re.compile(r"차이나|중국|China|CSI|과창판|심천|A50", re.I)),
+    ("JP", re.compile(r"일본|니케이|닛케이|Nikkei|TOPIX|Japan|도쿄", re.I)),
+    ("DE", re.compile(r"독일|DAX|Germany", re.I)),
+    ("SG", re.compile(r"싱가포르|Singapore", re.I)),
+    ("CA", re.compile(r"캐나다|Canada", re.I)),
+    ("GB", re.compile(r"영국|FTSE\s?100|\bUK\b", re.I)),
+]
+LINK_MARKETS = {c for c, _ in KR_LINKS}
 
 
 def kr_link(name):
@@ -867,11 +915,15 @@ def kr_link(name):
     name = str(name)
     if re.search(r"ex[\s-]?China", name, re.I):     # '중국 제외' ETF
         return None
-    if KR_TO_HK.search(name):
-        return "HK"
-    if KR_TO_CN.search(name):
-        return "CN"
+    for code, pat in KR_LINKS:
+        if pat.search(name):
+            return code
     return None
+
+
+def lk(r):
+    """한국 상장인데 다른 나라에 투자하는 ETF면 그 나라 코드 (그 나라 탭에도 보여주려고)"""
+    return (kr_link(r["name"]) or "") if r["market"] == "KR" else ""
 
 
 def tab_list(df):
@@ -884,7 +936,7 @@ def tab_list(df):
 
 def tab_df(df, kind, val):
     if kind == "m":
-        if val in ("CN", "HK"):
+        if val in LINK_MARKETS:
             return df[(df.market == val) | ((df.market == "KR") & (df["name"].map(kr_link) == val))]
         return df[df.market == val]
     if kind == "t":
@@ -894,7 +946,7 @@ def tab_df(df, kind, val):
 
 def tab_row(r, kind, val):
     if kind == "m":
-        if val in ("CN", "HK") and r["market"] == "KR":
+        if val in LINK_MARKETS and r["market"] == "KR":
             return kr_link(r["name"]) == val
         return r["market"] == val
     if kind == "t":
@@ -932,7 +984,7 @@ def dashboard(df, long, today, demo, build=""):
 회사 하나만 살 때보다 덜 출렁여요.<br>
 기본은 <b>전체 · 나라별</b>로 보고, 나라를 고른 채로 그 아래 <b>테마</b> 버튼(반도체·배당·채권처럼 비슷한 ETF 묶음)을 누르면 그 나라의 그 테마 순위만 볼 수 있어요. 테마를 한 번 더 누르면 해제돼서 그 나라 전체 순위가 보여요. 테마 버튼은 옆으로 밀면 더 있어요.<br>
 점수는 100점에 가까울수록 좋아요.<br>
-<b>🇨🇳 중국 · 🇭🇰 홍콩 탭</b>에는 그 나라에 상장된 ETF와 함께, 중국·홍콩에 투자하는 <b>한국 상장 ETF(🇰🇷 표시)</b>도 나와요. 🇰🇷 표시는 한국 증권 계좌로 바로 살 수 있어요.<br><br>
+<b>나라 탭</b>(중국·홍콩·일본·독일·싱가포르·캐나다·영국)에는 그 나라에 상장된 ETF와 함께, 그 나라에 투자하는 <b>한국 상장 ETF(🇰🇷 표시)</b>도 나와요. 나라 버튼은 옆으로 밀면 더 있어요. 🇰🇷 표시는 한국 증권 계좌로 바로 살 수 있어요.<br><br>
 <b>📅 요즘 추천</b> (최근 몇 달 동안의 가격을 보고 골랐어요)<br>
 &nbsp;&nbsp;🏆 오늘의 추천: 잘 오르면서 너무 출렁이지 않는 것<br>
 &nbsp;&nbsp;🚀 쑥쑥 오르는 중: 요즘 가격이 많이 오른 것<br>
@@ -955,7 +1007,7 @@ def dashboard(df, long, today, demo, build=""):
 <title>ETF 추천 대시보드</title><style>{CSS}</style></head><body>{banner}
 <header><h1>📊 오늘의 ETF 추천</h1><p>{today} 업데이트 · {counts} ETF를 살펴봤어요</p></header>
 {guide}
-<nav class="bar"><div class="row big">{vbtn}</div><div class="row">{mbtn}</div><div class="row scroll">{tbtn}</div>
+<nav class="bar"><div class="row big">{vbtn}</div><div class="row scroll">{mbtn}</div><div class="row scroll">{tbtn}</div>
 <div class="row" id="yrow">{ybtn}</div></nav>
 <main>
 <div class="view" data-v="recent">{recent}</div>

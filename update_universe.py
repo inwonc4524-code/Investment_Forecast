@@ -94,7 +94,24 @@ def save(rows):
 KR_TAB = {1: "국내 시장지수", 2: "국내 업종·테마", 3: "국내 파생", 4: "해외 주식", 5: "원자재", 6: "채권", 7: "기타"}
 
 
-CHINA_KR = re.compile(r"차이나|중국|항셍|홍콩|HSCEI|China|Hang\s?Seng|과창판|심천|CSI300|A50", re.I)
+FOREIGN_KR = [   # 한국 상장 ETF 중 이 나라들에 투자하는 것 (위에서부터 먼저 맞는 것)
+    ("홍콩", re.compile(r"항셍|홍콩|HSCEI|차이나H|Hang\s?Seng", re.I)),
+    ("중국", re.compile(r"차이나|중국|China|과창판|심천|CSI300|A50", re.I)),
+    ("일본", re.compile(r"일본|니케이|닛케이|Nikkei|TOPIX|Japan|도쿄", re.I)),
+    ("독일", re.compile(r"독일|DAX|Germany", re.I)),
+    ("싱가포르", re.compile(r"싱가포르|Singapore", re.I)),
+    ("캐나다", re.compile(r"캐나다|Canada", re.I)),
+    ("영국", re.compile(r"영국|FTSE\s?100|\bUK\b", re.I)),
+]
+
+
+def foreign_where(name):
+    if re.search(r"ex[\s-]?(China|Japan)", name, re.I):
+        return None
+    for where, pat in FOREIGN_KR:
+        if pat.search(name):
+            return where
+    return None
 
 
 def kr_top(limit=None):
@@ -118,10 +135,10 @@ def kr_top(limit=None):
     return out if limit == 0 else out[:KR_TOP]
 
 
-def kr_china():
-    """한국에 상장된 중국·홍콩 투자 ETF 전부 (레버리지·인버스 등은 SKIP 규칙으로 빠짐)"""
-    return [x for x in kr_top(limit=0)
-            if CHINA_KR.search(x["name"]) and not re.search(r"ex[\s-]?China", x["name"], re.I)]
+def kr_foreign():
+    """한국에 상장된 중국·홍콩·일본·독일·싱가포르·캐나다·영국 투자 ETF 전부
+    (레버리지·인버스 등은 SKIP 규칙으로 빠짐)"""
+    return [x for x in kr_top(limit=0) if foreign_where(x["name"])]
 
 
 # ───────── 미국 ETF: 운용자산 순위 ─────────
@@ -160,16 +177,16 @@ def main():
     except Exception as e:
         print("한국 ETF 순위 업데이트 실패:", e)
     try:
-        for x in kr_china():
+        for x in kr_foreign():
             if x["ticker"] in have:
                 continue
-            where = "홍콩" if re.search(r"항셍|홍콩|HSCEI|차이나H|Hang\s?Seng", x["name"], re.I) else "중국"
+            where = foreign_where(x["name"])
             rows.append({"ticker": x["ticker"], "name": x["name"], "market": "KR",
                          "category": f"{where} 투자 (한국 상장)", "theme": themes_for(x["name"])})
             have.add(x["ticker"])
             added.append(f"🇰🇷→{where} {x['name']}")
     except Exception as e:
-        print("한국 상장 중국·홍콩 ETF 추가 실패:", e)
+        print("한국 상장 해외(중국·홍콩·일본 등) ETF 추가 실패:", e)
     try:
         for x in us_top():
             if x["ticker"] in have:
