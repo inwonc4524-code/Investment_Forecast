@@ -2,8 +2,8 @@
 야후 파이낸스 가격을 다른 사이트와 비교해서 틀린 걸 고치거나 빼요.
 
   🇰🇷 한국(주식·ETF): 네이버 증권 일별 시세
-  🇺🇸 미국 · 🇯🇵 일본 · 🇬🇧 영국 · 🇩🇪 독일 · 🇭🇰 홍콩: Stooq 일별 시세
-  (중국·베트남·인도네시아·싱가포르·캐나다는 무료로 비교할 사이트가 마땅치 않아 야후 자료 안에서만 점검)
+  🇺🇸 미국 · 🇯🇵 일본 · 🇭🇰 홍콩 · 🇨🇳 중국 · 🇻🇳 베트남: 네이버 증권 해외주식 일별 시세
+  (영국·독일·인도네시아·싱가포르·캐나다는 무료로 비교할 사이트가 마땅치 않아 야후 자료 안에서만 점검)
 
 하는 일
   1. 마지막 마감 가격이 2% 넘게 다르면 → 다른 사이트 가격으로 고쳐요
@@ -24,7 +24,8 @@ import requests
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     "(KHTML, like Gecko) Chrome/130.0 Safari/537.36"}
-STOOQ_SUFFIX = {"US": "us", "JP": "jp", "UK": "uk", "DE": "de", "HK": "hk"}
+WORLD = {"US", "JP", "HK", "CN", "VN"}   # 네이버 해외주식으로 비교할 수 있는 나라
+FAILS = {}   # 사이트별 연속 실패 수 (계속 실패하면 이번 실행에선 그만 물어봄)
 ROTATE = 150                 # 해외는 한 번에 이만큼씩 돌아가며 비교 (+ 크게 움직인 곳은 항상)
 BAD = {}                     # 티커 → 순위에서 뺄 기간 {"1d","1w","1m",1}
 REPORT = {"source_ok": 0, "source_none": 0, "fixed_last": [], "excluded": [], "no_source_markets": []}
@@ -43,36 +44,47 @@ def naver_series(code):
     return pd.Series(dict(data)).sort_index() if data else None
 
 
-def stooq_series(ticker, mk):
-    base = ticker.split(".")[0].lower()
-    cands = [base]
-    if mk == "HK":
-        cands = [base.lstrip("0") or "0", base]
-    for b in cands:
-        url = f"https://stooq.com/q/d/l/?s={b}.{STOOQ_SUFFIX[mk]}&i=d"
-        r = requests.get(url, headers=UA, timeout=15)
-        if not r.ok or not r.text.startswith("Date"):
+def naver_world_codes(ticker, mk):
+    """야후 티커 → 네이버 해외주식 코드 후보"""
+    if mk == "US":
+        base = ticker
+        if "-" in base:   # BRK-B → BRKb
+            a, c = base.split("-", 1)
+            base = a + c.lower()
+        return [base + ".O", base, base + ".K"]   # 나스닥 · 뉴욕 · 기타
+    if mk == "VN":
+        return [ticker.replace(".VN", ".HM"), ticker.replace(".VN", ".HN")]
+    return [ticker]   # 일본 .T · 홍콩 .HK · 중국 .SS/.SZ 는 그대로
+
+
+def naver_world_series(ticker, mk):
+    end = pd.Timestamp.today()
+    start = end - pd.Timedelta(days=400)
+    for code in naver_world_codes(ticker, mk):
+        url = (f"https://api.stock.naver.com/chart/foreign/item/{code}/day?"
+               f"startDateTime={start:%Y%m%d}0000&endDateTime={end:%Y%m%d}2359")
+        r = requests.get(url, headers=UA, timeout=12)
+        if not r.ok:
             continue
-        d = pd.read_csv(io.StringIO(r.text))
-        if d.empty:
-            continue
-        s = pd.Series(d.Close.values, index=pd.to_datetime(d.Date)).dropna()
-        s = s[s.index >= pd.Timestamp.today() - pd.Timedelta(days=400)]
-        if mk == "UK" and len(s):   # Stooq는 파운드, 야후는 펜스일 수 있어서 맞춤
-            s = s * 100
-        return s if len(s) else None
+        data = r.json()
+        if isinstance(data, list) and data:
+            s = pd.Series({pd.Timestamp(str(x["localDate"])): float(x["closePrice"]) for x in data
+                           if x.get("closePrice")}).sort_index()
+            if len(s):
+                return s
     return None
 
 
 def source(ticker, mk):
-    try:
-        if mk == "KR":
-            return naver_series(ticker.split(".")[0])
-        if mk in STOOQ_SUFFIX:
-            return stooq_series(ticker, mk)
-    except Exception:
+    kind = "kr" if mk == "KR" else "world" if mk in WORLD else None
+    if kind is None or FAILS.get(kind, 0) >= 15:   # 15번 연속 실패하면 그 사이트는 이번엔 쉬기
         return None
-    return None
+    try:
+        s = naver_series(ticker.split(".")[0]) if kind == "kr" else naver_world_series(ticker, mk)
+    except Exception:
+        s = None
+    FAILS[kind] = 0 if s is not None else FAILS.get(kind, 0) + 1
+    return s
 
 
 # ───────── 비교 ─────────
@@ -96,7 +108,7 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
     names = names or {}
     tickers = [t for t in closes if t in raw and len(raw[t]) > 2]
     REPORT["no_source_markets"] = sorted({mkt_of.get(t, "") for t in tickers}
-                                         - set(STOOQ_SUFFIX) - {"KR", ""})
+                                         - WORLD - {"KR", ""})
 
     # 비교할 곳 고르기: 한국은 전부, 해외는 크게 움직인 곳 + 돌아가며 ROTATE개
     def big_move(t):
@@ -113,7 +125,7 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
             rot = json.load(open(state_path)).get("rot", 0)
         except Exception:
             rot = 0
-    foreign = [t for t in tickers if mkt_of.get(t) in STOOQ_SUFFIX]
+    foreign = [t for t in tickers if mkt_of.get(t) in WORLD]
     pick = [t for t in tickers if mkt_of.get(t) == "KR"]
     pick += [t for t in foreign if big_move(t)]
     if foreign:
@@ -183,7 +195,7 @@ def save(path):
 def note_html(esc=lambda x: x):
     if not REPORT["source_ok"]:
         return ""
-    t = (f"🔎 야후 가격을 다른 사이트(한국: 네이버 증권, 미국·일본·영국·독일·홍콩: Stooq)와 비교했어요: "
+    t = (f"🔎 야후 가격을 다른 사이트(네이버 증권: 한국·미국·일본·홍콩·중국·베트남)와 비교했어요: "
          f"{REPORT['source_ok']}곳 확인")
     if REPORT["fixed_last"]:
         t += f" · 마지막 가격을 고친 곳 {len(REPORT['fixed_last'])}곳"
