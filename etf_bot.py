@@ -214,6 +214,14 @@ CLOSE_LOCAL = {"Europe/Berlin": "17:30", "Europe/London": "16:30", "America/Toro
                "America/New_York": "16:00"}   # 정규장 마감 (그 나라 시간)
 
 
+def day_index(s):
+    """가격 표의 날짜를 시간대 없는 '날짜'로 (시간대가 붙어 있으면 비교할 때 오류가 나서)"""
+    idx = pd.DatetimeIndex(s.index)
+    if idx.tz is not None:
+        idx = idx.tz_localize(None)
+    return idx.normalize()
+
+
 def fill_close(t, it):
     """야후가 마지막 30분 등을 빼고 줄 때가 있어서, 그날 실제 마감 가격으로 마지막 칸을 채움"""
     real = RAW.get(t)
@@ -225,8 +233,8 @@ def fill_close(t, it):
     if real is None or real.empty:
         it["upto"] = upto
         return
-    day = it["date"].normalize()
-    same = real[real.index.normalize() == day]
+    day = pd.Timestamp(it["date"]).tz_localize(None).normalize() if pd.Timestamp(it["date"]).tz else pd.Timestamp(it["date"]).normalize()
+    same = real[day_index(real) == day]
     if same.empty:
         it["upto"] = upto
         return
@@ -292,16 +300,16 @@ def fetch_intraday(tickers):
             fill_close(t, it)
             # 장 시작가가 이상하게 찍히는 경우(예: +18%) 거르기: 하루 등락(전날 마감→오늘 마감)과 비교
             real = RAW.get(t)
-            day = it["date"].normalize()
-            if real is not None and len(real) >= 2 and real.index[-1].normalize() == day:
+            day = pd.Timestamp(it["date"]).normalize()
+            if real is not None and len(real) >= 2 and day_index(real)[-1] == day:
                 daily = float(real.iloc[-1] / real.iloc[-2] - 1)
                 intra = it["close"][-1] / it["open"] - 1
                 gap = it["open"] / float(real.iloc[-2]) - 1   # 장 시작가가 전날 마감보다 얼마나 떨어져 있나
                 # 장 시작부터 크게 오르거나 내린 날(반도체 +8% 등)은 정상이라, 시작가가 말이 안 되게 튈 때(±25% 넘게)만 거름
                 if abs(intra - daily) > 0.07 and abs(gap) > 0.25:
                     bad.append(t)
-        except Exception:
-            pass
+        except Exception as e:
+            CHECK.setdefault("intra_err", []).append(f"{t}: {type(e).__name__} {e}")
     for t in bad:
         INTRA.pop(t, None)
     CHECK["intra_bad"] += bad
@@ -332,7 +340,7 @@ def apply_intraday(df):
         real = RAW.get(r.ticker)
         it = INTRA.get(r.ticker)
         if it and it.get("upto") and real is not None and len(real) >= 1 \
-                and real.index[-1].normalize() < it["date"].normalize():
+                and day_index(real)[-1] < pd.Timestamp(it["date"]).normalize():
             # 오늘 마감 가격이 아직 없음 → 전날 마감 → 오늘 마지막 거래 가격
             return float(it["close"][-1] / real.iloc[-1] - 1)
         if real is not None and len(real) >= 2 and real.index[-1].strftime("%Y-%m-%d") == r.date:
