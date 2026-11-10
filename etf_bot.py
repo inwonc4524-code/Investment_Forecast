@@ -24,6 +24,8 @@ import numpy as np
 import pandas as pd
 import requests
 
+import crosscheck
+
 KST = timezone(timedelta(hours=9))
 HERE = os.path.dirname(os.path.abspath(__file__))
 DOCS = os.path.join(HERE, "docs")
@@ -75,6 +77,66 @@ CLOSE_KST = {"KR": "15:30", "US": "06:00", "CN": "16:00", "HK": "17:00", "JP": "
              "DE": "01:30", "SG": "18:00", "CA": "06:00", "GB": "01:30"}   # 각 나라 장 마감 (한국시간)
 MKT_NAME = {"KR": "한국", "US": "미국", "CN": "중국", "HK": "홍콩", "JP": "일본",
             "DE": "독일", "SG": "싱가포르", "CA": "캐나다", "GB": "영국"}
+
+
+# 각 나라 장이 끝나는 시각(그 나라 시간, 자료가 들어올 여유 20분 포함)
+# 아직 장이 안 끝났으면 '오늘' 가격은 진행 중이라 빼고 어제 마감까지만 써요
+EXCH = {"KR": ("Asia/Seoul", "15:50"), "US": ("America/New_York", "16:20"), "CN": ("Asia/Shanghai", "15:20"),
+        "HK": ("Asia/Hong_Kong", "16:30"), "JP": ("Asia/Tokyo", "15:50"), "VN": ("Asia/Ho_Chi_Minh", "15:20"),
+        "ID": ("Asia/Jakarta", "16:30"), "DE": ("Europe/Berlin", "17:50"), "UK": ("Europe/London", "16:50"),
+        "SG": ("Asia/Singapore", "17:30"), "CA": ("America/Toronto", "16:20")}
+MKT_OF = {}   # 티커 → 나라
+
+
+def open_today(mk):
+    """그 나라 장이 오늘 아직 안 끝났으면 그 나라 날짜를, 끝났으면 None"""
+    from zoneinfo import ZoneInfo
+    if mk not in EXCH:
+        return None
+    tz, hm = EXCH[mk]
+    now = datetime.now(ZoneInfo(tz))
+    h, m = map(int, hm.split(":"))
+    return now.date() if now < now.replace(hour=h, minute=m, second=0, microsecond=0) else None
+
+
+def trim_open(s, mk):
+    d = open_today(mk)
+    if d is not None and len(s) and pd.Timestamp(s.index[-1]).date() == d:
+        return s.iloc[:-1]
+    return s
+
+
+def trim_all(closes):
+    n = 0
+    for t in list(closes):
+        s2 = trim_open(closes[t], MKT_OF.get(t, ""))
+        n += len(s2) < len(closes[t])
+        closes[t] = s2
+    for t in list(RAW):
+        RAW[t] = trim_open(RAW[t], MKT_OF.get(t, ""))
+    if n:
+        print(f"아직 장이 안 끝난 곳 {n}개는 오늘 가격을 빼고 어제 마감까지만 썼어요")
+
+
+CROSS_STATE = os.path.join(DOCS, "crosscheck_state.json")
+
+
+def cross_all(closes, universe):
+    """야후 가격을 다른 사이트와 비교 (틀린 마지막 가격은 고치고, 크게 다른 기간은 순위에서 뺌)"""
+    try:
+        crosscheck.run(closes, RAW, MKT_OF, dict(zip(universe.ticker, universe.name)), CROSS_STATE)
+        crosscheck.save(os.path.join(DOCS, "crosscheck.json"))
+    except Exception as e:
+        print("다른 사이트와 비교 실패:", e)
+
+
+def drop_bad_periods(df):
+    cols = {"1d": "r1d", "1w": "r1w", "1m": "r1m", 1: "r12m"}
+    for t, per in crosscheck.BAD.items():
+        for k in per:
+            if cols.get(k) in df:
+                df.loc[df.ticker == t, cols[k]] = np.nan
+    return df
 
 
 def load_universe():
@@ -205,6 +267,11 @@ def fetch_intraday(tickers):
                 continue
             days = [x.date() for x in d.index]
             last = days[-1]
+            if open_today(MKT_OF.get(t, "")) == last:   # 아직 장 중이면 전날 장으로
+                before = sorted({x for x in days if x < last})
+                if not before:
+                    continue
+                last = before[-1]
             day = d[[x == last for x in days]]
             if len(day) < MIN_HOURS:      # 1시간 칸이 너무 적으면 믿지 않고 '하루 전체'로 보여줌
                 continue
@@ -535,6 +602,8 @@ def build_long(universe, closes):
         for _, u in universe.iterrows():
             s = closes.get(u.ticker)
             if s is None or s.empty:
+                continue
+            if y in crosscheck.BAD.get(u.ticker, ()):   # 다른 사이트와 숫자가 달라 이번엔 뺌
                 continue
             lt = intraday_term(u.ticker, s) if y == "1d" else long_term(s.dropna(), y)
             if lt:
@@ -1108,7 +1177,7 @@ def dashboard(df, long, today, demo, build=""):
 <div class="view" data-v="recent">{recent}</div>
 <div class="view" data-v="long">{long_html}</div>
 <footer>
-💡 ETF가 나눠주는 돈(배당금)도 더해서 계산했고, 살 때 내는 수수료와 세금은 빼지 않았어요.<br>
+{crosscheck.note_html(E)}💡 ETF가 나눠주는 돈(배당금)도 더해서 계산했고, 살 때 내는 수수료와 세금은 빼지 않았어요.<br>
 '100만 원이 → 얼마'는 그 기간 처음에 100만 원어치 샀다면 지금 얼마가 됐을지 보여줘요.<br>
 ⚠ 지나간 숫자로 계산한 참고용이에요. 앞으로도 똑같이 오른다는 약속도, 사라는 뜻도 아니에요.
 </footer></main>
@@ -1124,11 +1193,16 @@ def main():
 
     universe = load_universe()
     tickers = universe.ticker.tolist()
+    MKT_OF.update(dict(zip(universe.ticker, universe.market)))
     closes = demo_prices(tickers) if args.demo else fetch_prices(tickers)
+    if not args.demo:
+        trim_all(closes)
+        cross_all(closes, universe)
 
     (demo_intraday(closes) if args.demo else fetch_intraday(tickers))
     df = build_table(universe, closes)
     df = apply_intraday(df)
+    df = drop_bad_periods(df)
     long = build_long(universe, closes)
     today = datetime.now(KST).strftime("%Y-%m-%d")
 
