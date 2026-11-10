@@ -11,43 +11,43 @@ ticker,name,market,category,theme
 381170.KS,TIGER 미국테크TOP10 INDXX,KR,미국 빅테크(원화),tech
 458730.KS,TIGER 미국배당다우존스,KR,미국 배당(원화),div
 132030.KS,KODEX 골드선물(H),KR,금,gold
-148070.KS,KOSEF 국고채10년,KR,국내 채권,bond
-SPY,SPDR S&P 500,US,미국 대형주,sp500
-QQQ,Invesco QQQ (나스닥100),US,미국 기술주,tech
-VTI,Vanguard Total Stock Market,US,미국 전체시장,sp500
-IWM,iShares Russell 2000,US,미국 소형주,
-SCHD,Schwab US Dividend Equity,US,미국 배당,div
-SMH,VanEck Semiconductor,US,반도체,semi
-XLK,Technology Select Sector,US,미국 기술 섹터,tech
-XLF,Financial Select Sector,US,미국 금융 섹터,
-XLV,Health Care Select Sector,US,미국 헬스케어 섹터,bio
-XLE,Energy Select Sector,US,미국 에너지 섹터,gold
-XLU,Utilities Select Sector,US,미국 유틸리티 섹터,power
-VEA,Vanguard Developed Markets,US,선진국(미국 제외),world
-VWO,Vanguard Emerging Markets,US,신흥국,world
+148070.KS,KIWOOM 국고채10년,KR,국내 채권,bond
+SPY,State Street SPDR S&P 500 ETF Trust,US,미국 대형주,sp500
+QQQ,Invesco QQQ Trust  Series 1,US,미국 기술주,tech
+VTI,Vanguard Morningstar Total Stock Mkt ETF,US,미국 전체시장,sp500
+IWM,iShares Russell 2000 ETF,US,미국 소형주,
+SCHD,Schwab US Dividend Equity ETF,US,미국 배당,div
+SMH,VanEck Semiconductor ETF,US,반도체,semi
+XLK,State Street Technology Select Sector SPDR ETF,US,미국 기술 섹터,tech
+XLF,State Street Financial Sel Sec SPDR ETF,US,미국 금융 섹터,
+XLV,State Street Health Care Select Sector SPDR ETF,US,미국 헬스케어 섹터,bio
+XLE,State Street Energy Select Sector SPDR ETF,US,미국 에너지 섹터,gold
+XLU,State Street Utilities Select Sector SPDR ETF,US,미국 유틸리티 섹터,power
+VEA,Vanguard FTSE Developed Markets ETF,US,선진국(미국 제외),world
+VWO,Vanguard FTSE Emerging Markets ETF,US,신흥국,world
 GLD,SPDR Gold Shares,US,금,gold
-TLT,iShares 20+ Year Treasury,US,미국 장기채,bond
-IEF,iShares 7-10 Year Treasury,US,미국 중기채,bond
-510300.SS,CSI 300 ETF (화태백서),CN,중국 대형주(CSI300),
-510050.SS,상하이 50 ETF (화샤),CN,중국 초대형주(SSE50),
-510500.SS,CSI 500 ETF (남방),CN,중국 중형주(CSI500),
-159915.SZ,창업판 ETF (이팡다),CN,중국 성장주(창업판),bat
-588000.SS,커촹판 50 ETF (화샤),CN,중국 기술주(STAR50),semi|tech
-512480.SS,반도체 ETF (궈롄안),CN,중국 반도체,semi
-512880.SS,증권 ETF (궈타이),CN,중국 증권,
-512170.SS,의료 ETF (화바오),CN,중국 헬스케어,bio
-515790.SS,태양광 ETF (화타이),CN,중국 태양광,ess
-510880.SS,배당 ETF (화타이),CN,중국 배당,div
+TLT,iShares 20+ Year Treasury Bond ETF,US,미국 장기채,bond
+IEF,iShares 7-10 Year Treasury Bond ETF,US,미국 중기채,bond
+510300.SS,Huatai-PB CSI 300 ETF,CN,중국 대형주(CSI300),
+510050.SS,ChinaAMC China 50 ETF,CN,중국 초대형주(SSE50),
+510500.SS,China Southern CSI 500 Index ETF,CN,중국 중형주(CSI500),
+159915.SZ,E Fund ChiNext ETF,CN,중국 성장주(창업판),bat
+588000.SS,ChinaAMC SSE Science &Tech Innov Board 50 ETF,CN,중국 기술주(STAR50),semi|tech
+512480.SS,CPIC CSI All Share Semicon & Eqpt Idx ETF,CN,중국 반도체,semi
+512880.SS,Guotai CSI All Share Invt Bkg & Brokerage ETF,CN,중국 증권,
+512170.SS,Hwabao WP CSI Medical Service Index ETF,CN,중국 헬스케어,bio
+515790.SS,Huatai-PineBridge Photovoltaic Industry Idx ETF,CN,중국 태양광,ess
+510880.SS,Huatai-PineBridge SSE Dividend ETF,CN,중국 배당,div
 518880.SS,금 ETF (화안),CN,금,gold
 513100.SS,나스닥100 ETF (궈타이),CN,미국 기술주(위안화),tech
-2800.HK,Tracker Fund (항셍지수),HK,홍콩 대형주(항셍),
-2828.HK,항셍 중국기업지수 ETF,HK,중국 대형주(H주),
-3033.HK,CSOP 항셍테크 ETF,HK,중국 빅테크,tech
-3032.HK,항셍테크 ETF (항셍투자),HK,중국 빅테크,tech
-2823.HK,iShares FTSE China A50,HK,중국 본토 대형주,
-3188.HK,ChinaAMC CSI 300,HK,중국 대형주(CSI300),
-3110.HK,Global X 항셍 고배당,HK,홍콩 배당,div
-2840.HK,SPDR Gold (홍콩),HK,금,gold
+2800.HK,Tracker Fund of Hong Kong,HK,홍콩 대형주(항셍),
+2828.HK,Hang Seng China Enterprises Index ETF,HK,중국 대형주(H주),
+3033.HK,CSOP Hang Seng TECH Index ETF HKD,HK,중국 빅테크,tech
+3032.HK,Hang Seng TECH Index ETF HKD,HK,중국 빅테크,tech
+2823.HK,iShares FTSE China A50 ETF,HK,중국 본토 대형주,
+3188.HK,ChinaAMC CSI 300 Index ETF,HK,중국 대형주(CSI300),
+3110.HK,GLOBAL X HANG SENG HIGH DIV YIELD ETF,HK,홍콩 배당,div
+2840.HK,SPDR Gold Shares,HK,금,gold
 102110.KS,TIGER 200,KR,국내 대형주,
 379800.KS,KODEX 미국S&P500,KR,미국 대형주(원화),sp500
 379810.KS,KODEX 미국나스닥100,KR,미국 기술주(원화),tech
@@ -65,73 +65,73 @@ IEF,iShares 7-10 Year Treasury,US,미국 중기채,bond
 143860.KS,TIGER 헬스케어,KR,국내 헬스케어,bio
 091180.KS,KODEX 자동차,KR,국내 자동차,
 102970.KS,KODEX 증권,KR,국내 증권,
-279530.KS,KODEX 고배당,KR,국내 배당,div
+279530.KS,KODEX 고배당주,KR,국내 배당,div
 446720.KS,SOL 미국배당다우존스,KR,미국 배당(원화),div
 411060.KS,ACE KRX금현물,KR,금,gold
-304660.KS,KODEX 미국채울트라30년선물(H),KR,미국 장기채(원화),bond
+304660.KS,KODEX 미국30년국채울트라선물(H),KR,미국 장기채(원화),bond
 305080.KS,TIGER 미국채10년선물,KR,미국 중기채(원화),bond
 153130.KS,KODEX 단기채권,KR,국내 단기채,bond
 241180.KS,TIGER 일본니케이225,KR,일본(원화),world
 453810.KS,KODEX 인도Nifty50,KR,인도(원화),world
-VOO,Vanguard S&P 500,US,미국 대형주,sp500
-DIA,SPDR 다우존스,US,미국 대형주(다우30),
-ARKK,ARK Innovation,US,미국 혁신 기술,tech
-IGV,iShares 소프트웨어,US,미국 소프트웨어,tech
-CIBR,First Trust 사이버보안,US,사이버보안,tech
-SOXX,iShares 반도체,US,반도체,semi
-IBB,iShares 나스닥 바이오,US,나스닥 바이오,bio
-XBI,SPDR 바이오,US,미국 바이오,bio
-LIT,Global X 리튬·배터리,US,리튬·배터리,bat
-BATT,Amplify 배터리 기술,US,배터리 기술,bat|ess
-ICLN,iShares 청정에너지,US,청정에너지,ess
-TAN,Invesco 태양광,US,태양광,ess
-URA,Global X 우라늄,US,우라늄·원자력,power
-NLR,VanEck 원자력,US,원자력,power
-GRID,First Trust 스마트그리드,US,전력망,power
-PAVE,Global X 미국 인프라,US,미국 인프라,power
-BOTZ,Global X 로봇·AI,US,로봇·AI,robot
-ROBO,ROBO 글로벌 로봇,US,로봇·자동화,robot
-ARKQ,ARK 자율주행·로봇,US,자율주행·로봇,robot
-ITA,iShares 항공·방산,US,항공·방산,defense
-XAR,SPDR 항공·방산,US,항공·방산,defense
-VIG,Vanguard 배당성장,US,미국 배당성장,div
-VYM,Vanguard 고배당,US,미국 고배당,div
-DGRO,iShares 배당성장,US,미국 배당성장,div
-JEPI,JPMorgan 프리미엄 인컴,US,월배당,div
-VNQ,Vanguard 부동산(리츠),US,미국 부동산,
-SLV,iShares 은,US,은,gold
-GDX,VanEck 금광회사,US,금광 회사,gold
-USO,United States Oil,US,원유,gold
-DBC,Invesco 원자재,US,원자재,gold
-BND,Vanguard 채권 전체,US,미국 채권,bond
-AGG,iShares 채권 전체,US,미국 채권,bond
-SHY,iShares 1-3년 국채,US,미국 단기채,bond
-HYG,iShares 하이일드 회사채,US,미국 회사채(고수익),bond
-LQD,iShares 우량 회사채,US,미국 회사채,bond
-XLY,Consumer Discretionary,US,미국 소비(쇼핑·자동차),
-XLP,Consumer Staples,US,미국 필수소비(음식·생활),
-XLI,Industrial Select,US,미국 산업재,
-XLB,Materials Select,US,미국 소재,
-XLC,Communication Services,US,미국 통신·미디어,tech
-XLRE,Real Estate Select,US,미국 부동산,
-EWJ,iShares 일본,US,일본,world
-EWY,iShares 한국,US,한국(달러),world
-EWT,iShares 대만,US,대만,world|semi
-INDA,iShares 인도,US,인도,world
-EWZ,iShares 브라질,US,브라질,world
-MCHI,iShares 중국,US,중국(달러),world
-KWEB,KraneShares 중국 인터넷,US,중국 인터넷,tech|world
-515030.SS,신에너지차 ETF (화샤),CN,중국 전기차,bat
-159755.SZ,배터리 ETF (광파),CN,중국 배터리,bat
-562500.SS,로봇 ETF (화샤),CN,중국 로봇,robot
-159819.SZ,인공지능 ETF (이팡다),CN,중국 AI,robot|tech
-512660.SS,군수 ETF (궈타이),CN,중국 방산,defense
-512010.SS,의약 ETF (이팡다),CN,중국 제약,bio
-512690.SS,주류 ETF (펑화),CN,중국 술·소비,
-159928.SZ,소비 ETF (후이톈푸),CN,중국 소비,
-3067.HK,iShares 항셍테크,HK,중국 빅테크,tech
-2801.HK,iShares Core MSCI China,HK,중국 대형주,
-2836.HK,iShares 인도 SENSEX,HK,인도,world
+VOO,Vanguard S&P 500 ETF,US,미국 대형주,sp500
+DIA,State Street SPDR Dow Jones Indust Avg ETF Trust,US,미국 대형주(다우30),
+ARKK,ARK Innovation ETF,US,미국 혁신 기술,tech
+IGV,iShares Expanded Tech-Software Sector ETF,US,미국 소프트웨어,tech
+CIBR,First Trust NASDAQ Cybersecurity ETF,US,사이버보안,tech
+SOXX,iShares Semiconductor ETF,US,반도체,semi
+IBB,iShares Biotechnology ETF,US,나스닥 바이오,bio
+XBI,State Street SPDR S&P Biotech ETF,US,미국 바이오,bio
+LIT,Global X Lithium & Battery Tech ETF,US,리튬·배터리,bat
+BATT,Amplify Lithium & Battery Technology ETF,US,배터리 기술,bat|ess
+ICLN,iShares Global Clean Energy ETF,US,청정에너지,ess
+TAN,Invesco Solar ETF,US,태양광,ess
+URA,Global X Uranium ETF,US,우라늄·원자력,power
+NLR,VanEck Uranium and Nuclear ETF,US,원자력,power
+GRID,First Trust NASDAQ Cln Edge Smart Grid Infra Ix Fd,US,전력망,power
+PAVE,Global X US Infrastructure Development ETF,US,미국 인프라,power
+BOTZ,Global X Robotics and Artificial Intelligence ETF,US,로봇·AI,robot
+ROBO,ROBO Global Robotics and Automation Index ETF,US,로봇·자동화,robot
+ARKQ,ARK Autonomous Technology & Robotics ETF,US,자율주행·로봇,robot
+ITA,iShares US Aerospace & Defense ETF,US,항공·방산,defense
+XAR,State Street SPDR S&P Aerospace & Defense ETF,US,항공·방산,defense
+VIG,Vanguard Dividend Appreciation ETF,US,미국 배당성장,div
+VYM,Vanguard High Dividend Yield ETF,US,미국 고배당,div
+DGRO,iShares Core Dividend Growth ETF,US,미국 배당성장,div
+JEPI,JPMorgan Equity Premium Income ETF,US,월배당,div
+VNQ,Vanguard Real Estate ETF,US,미국 부동산,
+SLV,iShares Silver Trust,US,은,gold
+GDX,VanEck Gold Miners ETF,US,금광 회사,gold
+USO,United States Oil Fund LP,US,원유,gold
+DBC,Invesco DB Commodity Index Tracking Fund,US,원자재,gold
+BND,Vanguard Total Bond Market ETF,US,미국 채권,bond
+AGG,iShares Core US Aggregate Bond ETF,US,미국 채권,bond
+SHY,iShares 1-3 Year Treasury Bond ETF,US,미국 단기채,bond
+HYG,iShares iBoxx $ High Yield Corporate Bond ETF,US,미국 회사채(고수익),bond
+LQD,iShares iBoxx $ Inv Grade Corporate Bond ETF,US,미국 회사채,bond
+XLY,State Street Consumer Disc Sel Sect SPDR ETF,US,미국 소비(쇼핑·자동차),
+XLP,State Street Consumer Staples Sel Sect SPDR ETF,US,미국 필수소비(음식·생활),
+XLI,State Street Industrial Select Sector SPDR ETF,US,미국 산업재,
+XLB,State Street Materials Select Sector SPDR ETF,US,미국 소재,
+XLC,State Street Com Svc Sel Sec SPDR ETF,US,미국 통신·미디어,tech
+XLRE,State Street Real Estate Select Sector SPDR ETF,US,미국 부동산,
+EWJ,iShares MSCI Japan ETF,US,일본,world
+EWY,Ishares Msci South Korea ETF,US,한국(달러),world
+EWT,Ishares Msci Taiwan ETF,US,대만,world|semi
+INDA,iShares MSCI India ETF,US,인도,world
+EWZ,Ishares Msci Brazil ETF,US,브라질,world
+MCHI,iShares MSCI China ETF,US,중국(달러),world
+KWEB,KraneShares CSI China Internet ETF,US,중국 인터넷,tech|world
+515030.SS,ChinaAMC CSI New Energy Vehicles Index ETF,CN,중국 전기차,bat
+159755.SZ,GF CNI NEV Battery Index ETF,CN,중국 배터리,bat
+562500.SS,ChinaAMC CSI Robot Index ETF,CN,중국 로봇,robot
+159819.SZ,E Fund CSI Artificial Intelligence Index ETF,CN,중국 AI,robot|tech
+512660.SS,Guotai CSI National Defense ETF,CN,중국 방산,defense
+512010.SS,E Fund CSI 300 Pharmaceutical Index ETF,CN,중국 제약,bio
+512690.SS,Penghua CSI Alcoholic Drink Index ETF,CN,중국 술·소비,
+159928.SZ,China Universal CSI Consumption Index ETF,CN,중국 소비,
+3067.HK,iShares Hang Seng TECH ETF,HK,중국 빅테크,tech
+2801.HK,iShares Core MSCI China ETF,HK,중국 대형주,
+2836.HK,iShares Core SENSEX India ETF,HK,인도,world
 278530.KS,KODEX 200TR,KR,국내 시장지수 (시총 8위),
 498400.KS,KODEX 200타겟위클리커버드콜,KR,국내 업종·테마 (시총 9위),div
 360200.KS,ACE 미국S&P500,KR,해외 주식 (시총 12위),sp500
@@ -204,68 +204,68 @@ KWEB,KraneShares 중국 인터넷,US,중국 인터넷,tech|world
 0061Z0.KS,RISE 단기특수은행채액티브,KR,채권 (시총 99위),
 441800.KS,TIME Korea플러스배당액티브,KR,국내 시장지수 (시총 100위),div
 IVV,iShares Core S&P 500 ETF,US,Large Blend,sp500
-VXUS,Vanguard Total International Stock Index Fund ETF Shares,US,Foreign Large Blend,world
+VXUS,Vanguard Total International Stock ETF,US,Foreign Large Blend,world
 VUG,Vanguard Morningstar Growth ETF,US,Large Growth,
 VTV,Vanguard Morningstar Value ETF,US,Large Value,
 VO,Vanguard Morningstar Mid-Cap ETF,US,Mid-Cap Blend,
 IEFA,iShares Core MSCI EAFE ETF,US,Foreign Large Blend,world
 VB,Vanguard Morningstar Small-Cap ETF,US,Small Blend,
-VGT,Vanguard Information Technology Index Fund ETF Shares,US,Technology,tech
+VGT,Vanguard Information Technology ETF,US,Technology,tech
 IEMG,iShares Core MSCI Emerging Markets ETF,US,Diversified Emerging Mkts,world
-BNDX,Vanguard Total International Bond Index Fund ETF Shares,US,Global Bond-USD Hedged,bond|world
+BNDX,Vanguard Total International Bond ETF,US,Global Bond-USD Hedged,bond|world
 IJH,iShares Core S&P Mid-Cap ETF,US,Mid-Cap Blend,
-IWF,iShares Russell 1000 Growth ETF,US,Large Growth,
+IWF,iShares Russell 1000 Growth,US,Large Growth,
 QQQM,Invesco NASDAQ 100 ETF,US,Large Growth,tech
 IJR,iShares Core S&P Small-Cap ETF,US,Small Blend,
-VT,Vanguard Total World Stock Index Fund ETF Shares,US,Global Large-Stock Blend,
+VT,Vanguard Total World Stock ETF,US,Global Large-Stock Blend,
 RSP,Invesco S&P 500 Equal Weight ETF,US,Large Blend,sp500
-ITOT,iShares Core S&P Total U.S. Stock Market ETF,US,Large Blend,
-VEU,Vanguard FTSE All-World ex-US Index Fund ETF Shares,US,Foreign Large Blend,world
-VXF,Vanguard Extended Market Index Fund ETF Shares,US,Mid-Cap Blend,
-DFAC,DFA U.S. Core Equity 2 Portfolio-ETF Class Shares,US,Large Blend,
+ITOT,iShares Core S&P Total US Stock Market ETF,US,Large Blend,
+VEU,Vanguard FTSE All-World ex US ETF,US,Foreign Large Blend,world
+VXF,Vanguard Extended Market ETF,US,Mid-Cap Blend,
+DFAC,DFA US Core Equity 2 ETF,US,Large Blend,
 IWD,iShares Russell 1000 Value ETF,US,Large Value,
 EFA,iShares MSCI EAFE ETF,US,Foreign Large Blend,world
 VV,Vanguard Morningstar Large-Cap ETF,US,Large Blend,
 IVW,iShares S&P 500 Growth ETF,US,Large Growth,sp500
-SCHX,Schwab U.S. Large-Cap ETF,US,Large Blend,
-VCIT,Vanguard Intermediate-Term Corporate Bond Index Fund ETF Shares,US,Corporate Bond,bond
+SCHX,Schwab US Large-Cap ETF,US,Large Blend,
+VCIT,Vanguard Intermediate-Term Corp Bond ETF,US,Corporate Bond,bond
 SCHF,Schwab International Equity ETF,US,Foreign Large Blend,world
 VBR,Vanguard Morningstar Small-Cap Value ETF,US,Small Value,
-SCHG,Schwab U.S. Large-Cap Growth ETF,US,Large Growth,
+SCHG,Schwab US Large-Cap Growth ETF,US,Large Growth,
 IAU,iShares Gold Trust,US,Commodities Focused,gold
 IWR,iShares Russell Mid-Cap ETF,US,Mid-Cap Blend,
 IXUS,iShares Core MSCI Total International Stock ETF,US,Foreign Large Blend,world
-VTEB,Vanguard Tax-Exempt Bond Index Fund ETF Shares,US,Muni National Interm,bond
+VTEB,Vanguard Tax-Exempt Bond ETF,US,Muni National Interm,bond
 MUB,iShares National Muni Bond ETF,US,Muni National Interm,bond
 SPYG,State Street SPDR Portfolio S&P 500 Growth ETF,US,Large Growth,sp500
-BIV,Vanguard Intermediate-Term Bond Index Fund ETF Shares,US,Intermediate Core Bond,bond
+BIV,Vanguard Intermediate-Term Bond ETF,US,Intermediate Core Bond,bond
 IVE,iShares S&P 500 Value ETF,US,Large Value,sp500
 IUSB,iShares Core Universal USD Bond ETF,US,Intermediate Core-Plus Bond,bond
-VGIT,Vanguard Intermediate-Term Treasury Index Fund ETF Shares,US,Intermediate Government,bond
+VGIT,Vanguard Intermediate-Term Treasury ETF,US,Intermediate Government,bond
 QUAL,iShares MSCI USA Quality Factor ETF,US,Large Blend,
 IWB,iShares Russell 1000 ETF,US,Large Blend,
-SCHB,Schwab U.S. Broad Market ETF,US,Large Blend,
-GOVT,iShares U.S. Treasury Bond ETF,US,Intermediate Government,bond
+SCHB,Schwab US Broad Market ETF,US,Large Blend,
+GOVT,iShares US Treasury Bond ETF,US,Intermediate Government,bond
 JEPQ,JPMorgan Nasdaq Equity Premium Income ETF,US,Derivative Income,tech|div
 VBK,Vanguard Morningstar Small-Cap Growth ETF,US,Small Growth,
-DYNF,iShares U.S. Equity Factor Rotation Active ETF,US,Large Blend,
-SPDW,State Street SPDR Portfolio Developed World ex-US ETF,US,Foreign Large Blend,world
+DYNF,Ishares US Equity Factor Rotation Active ETF,US,Large Blend,
+SPDW,State Street SPDR Portfolio Devt World ex-US ETF,US,Foreign Large Blend,world
 VOE,Vanguard Morningstar Mid-Cap Value ETF,US,Mid-Cap Value,
 SPYV,State Street SPDR Portfolio S&P 500 Value ETF,US,Large Value,sp500
 VGK,Vanguard FTSE Europe ETF,US,Europe Stock,world
 MBB,iShares MBS ETF,US,Government Mortgage-Backed Bond,bond
 MGK,Vanguard Morningstar Mega Cap Growth ETF,US,Large Growth,
-IUSG,iShares Core S&P U.S. Growth ETF,US,Large Growth,
+IUSG,iShares Core S&P US Growth ETF,US,Large Growth,
 AVUV,Avantis US Small Cap Value ETF,US,Small Value,
 VOT,Vanguard Morningstar Mid-Cap Growth ETF,US,Mid-Cap Growth,
 ACWI,iShares MSCI ACWI ETF,US,Global Large-Stock Blend,
 EFV,iShares MSCI EAFE Value ETF,US,Foreign Large Value,world
-FNDX,Schwab Fundamental U.S. Large Company ETF,US,Large Value,
+FNDX,Schwab Fundamental US Large Company ETF,US,Large Value,
 EEM,iShares MSCI Emerging Markets ETF,US,Diversified Emerging Mkts,world
 USHY,iShares Broad USD High Yield Corporate Bond ETF,US,High Yield Bond,bond
-MDY,State Street SPDR S&P MIDCAP 400 ETF Trust,US,Mid-Cap Blend,
+MDY,State Street SPDR S&P MidCap 400 ETF Trust,US,Mid-Cap Blend,
 USMV,iShares MSCI USA Min Vol Factor ETF,US,Large Blend,
-IGSB,iShares 1-5 Year Investment Grade Corporate Bond ETF,US,Short-Term Bond,bond
+IGSB,iShares 1-5 Year Investment Grade Corporate Bd ETF,US,Short-Term Bond,bond
 364980.KS,TIGER 2차전지TOP10,KR,국내 업종·테마 (시총 93위),bat
 490590.KS,RISE 미국AI밸류체인데일리고정커버드콜,KR,해외 주식 (시총 94위),div
 144600.KS,KODEX 은선물(H),KR,원자재 (시총 96위),
@@ -273,9 +273,9 @@ IGSB,iShares 1-5 Year Investment Grade Corporate Bond ETF,US,Short-Term Bond,bon
 0127P0.KS,ACE 미국대형성장주액티브,KR,해외 주식 (시총 98위),
 434060.KS,KODEX TDF2050액티브 적격,KR,기타 (시총 99위),bond
 314250.KS,KODEX 미국빅테크10(H),KR,해외 주식 (시총 100위),tech
-VHT,Vanguard Health Care Index Fund ETF Shares,US,Health,bio
-SCHA,Schwab U.S. Small-Cap ETF,US,Small Blend,
-DFUS,Dimensional U.S. Equity Market ETF,US,Large Blend,
+VHT,Vanguard Health Care ETF,US,Health,bio
+SCHA,Schwab US Small-Cap ETF,US,Small Blend,
+DFUS,DFA Dimensional US Equity Market ETF,US,Large Blend,
 371160.KS,TIGER 차이나항셍테크,KR,홍콩 투자 (한국 상장),tech
 396520.KS,TIGER 차이나반도체FACTSET,KR,중국 투자 (한국 상장),semi
 0043Y0.KS,TIME 차이나AI테크액티브,KR,중국 투자 (한국 상장),tech
@@ -322,20 +322,20 @@ DFUS,Dimensional U.S. Equity Market ETF,US,Large Blend,
 0154H0.KS,KoAct 차이나바이오헬스케어액티브,KR,중국 투자 (한국 상장),bio
 0128D0.KS,PLUS 차이나항셍테크위클리타겟커버드콜,KR,홍콩 투자 (한국 상장),tech|div
 0131A0.KS,SOL 차이나소비트렌드,KR,중국 투자 (한국 상장),
-1321.T,NEXT FUNDS 닛케이225,JP,일본 대형주(닛케이225),
-1330.T,닛코 닛케이225,JP,일본 대형주(닛케이225),
-1306.T,NEXT FUNDS TOPIX,JP,일본 전체시장(TOPIX),
-1348.T,MAXIS TOPIX,JP,일본 전체시장(TOPIX),
-1475.T,iShares Core TOPIX,JP,일본 전체시장(TOPIX),
-2516.T,도쿄 그로스마켓 250,JP,일본 성장주,
-2644.T,Global X 일본 반도체,JP,일본 반도체,semi
-1615.T,NEXT FUNDS TOPIX 은행,JP,일본 은행,
-1489.T,NEXT FUNDS 닛케이 고배당50,JP,일본 배당,div
-1478.T,iShares MSCI 일본 고배당,JP,일본 배당,div
-1343.T,NEXT FUNDS 일본 리츠,JP,일본 부동산(리츠),div
-1545.T,NEXT FUNDS 나스닥100,JP,미국 기술주(엔화),tech
-2558.T,MAXIS 미국 S&P500,JP,미국 대형주(엔화),sp500
-1540.T,일본 금 현물,JP,금,gold
+1321.T,Nomura NF Nikkei 225 ETF,JP,일본 대형주(닛케이225),
+1330.T,Amova Listed IDX Fund 225,JP,일본 대형주(닛케이225),
+1306.T,Nomura NF TOPIX ETF,JP,일본 전체시장(TOPIX),
+1348.T,MUAM MAXIS TOPIX ETF,JP,일본 전체시장(TOPIX),
+1475.T,BRJ iShares Core TOPIX ETF,JP,일본 전체시장(TOPIX),
+2516.T,Simplex TSE Growth 250 ETF,JP,일본 성장주,
+2644.T,GlobalX Japan Semiconductor ETF,JP,일본 반도체,semi
+1615.T,Nomura NF TOPIX Banks ETF,JP,일본 은행,
+1489.T,Nomura NF Nikkei225 High Div Yield Stock50 Idx ETF,JP,일본 배당,div
+1478.T,BRJ iShares MSCI Japan High Dividend ETF,JP,일본 배당,div
+1343.T,Nomura NF REIT Index ETF,JP,일본 부동산(리츠),div
+1545.T,Nomura NF NASDAQ-100(R) (Unhedged) ETF,JP,미국 기술주(엔화),tech
+2558.T,MUAM MAXIS US Equity (S&P500) ETF,JP,미국 대형주(엔화),sp500
+1540.T,Japan Physical Gold ETF,JP,금,gold
 EXS1.DE,iShares Core DAX,DE,독일 대형주(DAX),
 EXW1.DE,iShares EURO STOXX 50,DE,유럽 대형주(유로스톡스50),world
 EXSA.DE,iShares STOXX Europe 600,DE,유럽 전체시장,world
