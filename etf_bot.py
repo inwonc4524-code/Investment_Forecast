@@ -217,11 +217,18 @@ CLOSE_LOCAL = {"Europe/Berlin": "17:30", "Europe/London": "16:30", "America/Toro
 def fill_close(t, it):
     """야후가 마지막 30분 등을 빼고 줄 때가 있어서, 그날 실제 마감 가격으로 마지막 칸을 채움"""
     real = RAW.get(t)
+    # 마감 가격이 없으면 '몇 시 무렵까지'로 표시 (마지막 칸이 마감 시각을 넘으면 마감 시각까지)
+    _end = it["times"][-1] + pd.Timedelta(hours=1)
+    _h, _m = map(int, CLOSE_LOCAL[local_tz(t)].split(":"))
+    _close = it["times"][-1].normalize() + pd.Timedelta(hours=_h, minutes=_m)
+    upto = f"{_end.hour}시" if _end <= _close else (f"{_h}시" if _m == 0 else f"{_h}시 {_m}분")
     if real is None or real.empty:
+        it["upto"] = upto
         return
     day = it["date"].normalize()
     same = real[real.index.normalize() == day]
     if same.empty:
+        it["upto"] = upto
         return
     final = float(same.iloc[-1])
     last = it["times"][-1]
@@ -318,15 +325,21 @@ def apply_intraday(df):
     """1일 = 그 나라 장 시작 → 장 마감 (시간별 가격이 없으면 전날 마감 대비)"""
     def one(r):
         it = INTRA.get(r.ticker)
-        if it and it["date"].strftime("%Y-%m-%d") == r.date:
+        if it and it["date"].strftime("%Y-%m-%d") >= r.date:
             return it["close"][-1] / it["open"] - 1
         return r.r1d
     def prev(r):   # 전날 마감 → 오늘 마감 (증권사 앱의 '오늘 등락률'과 같은 방식, 실제 가격 기준)
         real = RAW.get(r.ticker)
+        it = INTRA.get(r.ticker)
+        if it and it.get("upto") and real is not None and len(real) >= 1 \
+                and real.index[-1].normalize() < it["date"].normalize():
+            # 오늘 마감 가격이 아직 없음 → 전날 마감 → 오늘 마지막 거래 가격
+            return float(it["close"][-1] / real.iloc[-1] - 1)
         if real is not None and len(real) >= 2 and real.index[-1].strftime("%Y-%m-%d") == r.date:
             return float(real.iloc[-1] / real.iloc[-2] - 1)
         return r.r1d
     df["rprev"] = df.apply(prev, axis=1)
+    df["upto"] = [(INTRA.get(t) or {}).get("upto", "") for t in df.ticker]
     df["r1d"] = df.apply(one, axis=1)
     return df
 
@@ -359,7 +372,7 @@ def intraday_term(ticker, s=None):
     labels = [lab(t) for t in it["times"]]
     return {"total": cl[-1] / o - 1, "cagr": np.nan, "blocks": blocks, "labels": labels,
             "ups": sum(b > 0 for b in blocks), "start": it["date"], "end": it["date"],
-            "p0": o, "p1": cl[-1], "is1d": True}
+            "p0": o, "p1": cl[-1], "is1d": True, "upto": it.get("upto", "")}
 
 
 def fetch_prices(tickers):
@@ -908,6 +921,8 @@ def recent_panel(sub, mk):
             return f"<td data-v='{v:.2f}'><b>{v:.0f}</b></td>"
         if pd.isna(v):
             return "<td data-v='-999'>-</td>"
+        if c in ("rprev", "r1d") and r.get("upto"):   # 마감 가격이 아직 없음 → 몇 시 무렵까지인지
+            return f"<td data-v='{v:.4f}'>{updown(v)}<small class='hint'> ~{r['upto']}</small></td>"
         return f"<td data-v='{v:.4f}'>{updown(v)}</td>"
 
     tid = f"t-{mk}"
@@ -939,6 +954,9 @@ def day_text(r):
     d = pd.Timestamp(r["end"])
     if r.get("daily"):
         return f"{MKT_NAME.get(m, '')} {d.month}월 {d.day}일 (전날 마감 → 이날 마감)"
+    if r.get("upto"):
+        return (f"{MKT_NAME.get(m, '')} {d.month}월 {d.day}일 장 시작부터 {r['upto']} 무렵 마지막 거래까지"
+                f" <span class='hint'>(마감 가격이 아직 없어요)</span>")
     return f"{MKT_NAME.get(m, '')} {d.month}월 {d.day}일 장 시작부터 마감까지"
 
 
@@ -961,8 +979,8 @@ def missing_note(r, ref_slots):
     mid = [t for t in miss if ref_slots and t != ref_slots[-1]]
     if mid:
         parts.append(", ".join(t.lstrip("0") for t in mid) + " 칸은 그 1시간 동안 거래가 없어서")
-    if ref_slots and ref_slots[-1] in miss:
-        parts.append(f"{ref_slots[-1].lstrip('0')}~마감 칸은 마감 가격이 아직 안 들어와서")
+    if ref_slots and ref_slots[-1] in miss and not r.get("upto"):
+        parts.append(f"{ref_slots[-1].lstrip('0')}~마감 칸은 그때 거래가 없어서")
     return " <span class='hint'>(" + " / ".join(parts) + " 빠졌어요)</span>"
 
 
