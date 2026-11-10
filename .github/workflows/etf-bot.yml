@@ -11,7 +11,7 @@ on:
   workflow_dispatch: {}   # Actions 화면에서 "Run workflow" 버튼으로 바로 실행
   push:                   # 종목 목록이나 코드를 고치면 바로 한 번 실행
     branches: [main]
-    paths: ["etf_bot.py", "etfs.csv", "reasons.json"]
+    paths: ["etf_bot.py", "etfs.csv", "reasons.json", "crosscheck.py", ".github/workflows/etf-bot.yml"]
 
 concurrency:            # 여러 번 겹쳐 실행되면 차례로 (저장할 때 부딪히지 않게)
   group: bot
