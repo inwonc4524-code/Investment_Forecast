@@ -230,10 +230,6 @@ def fill_close(t, it):
     _h, _m = map(int, CLOSE_LOCAL[local_tz(t)].split(":"))
     _close = it["times"][-1].normalize() + pd.Timedelta(hours=_h, minutes=_m)
     upto = f"{_end.hour}시" if _end <= _close else (f"{_h}시" if _m == 0 else f"{_h}시 {_m}분")
-    log = CHECK.setdefault("fill", {})
-    if len(it["times"]) < 7:
-        log[t] = {"마지막칸": str(it["times"][-1]), "기준일": str(it["date"]),
-                  "일봉마지막": str(real.index[-1]) if real is not None and len(real) else "없음"}
     if real is None or real.empty:
         it["upto"] = upto
         return
@@ -246,8 +242,6 @@ def fill_close(t, it):
     last = it["times"][-1]
     hh, mm = CLOSE_LOCAL[local_tz(t)].split(":")
     close_t = last.normalize() + pd.Timedelta(hours=int(hh), minutes=int(mm))
-    if t in log:
-        log[t]["결정"] = "칸추가" if last + pd.Timedelta(hours=1) < close_t else "마지막칸맞춤"
     if last + pd.Timedelta(hours=1) < close_t:      # 마감 전에 빈 시간이 있음 → 칸 추가
         it["close"].append(final)
         it["times"].append(last + pd.Timedelta(hours=1))
@@ -378,12 +372,12 @@ def intraday_term(ticker, s=None):
     close_hm = CLOSE_LOCAL[local_tz(ticker)]
     hh, mm = map(int, close_hm.split(":"))
 
-    def lab(t):
+    def lab(t, is_last):
         end = t.normalize() + pd.Timedelta(hours=hh, minutes=mm)
-        if t + pd.Timedelta(hours=1) > end:      # 1시간이 안 되는 마지막 칸
+        if t + pd.Timedelta(hours=1) > end or (is_last and it.get("tail")):   # 마감까지 이어지는 마지막 칸
             return f"{t:%H:%M}부터 마감까지 ({close_hm})"
         return f"{t:%H:%M}부터 1시간"
-    labels = [lab(t) for t in it["times"]]
+    labels = [lab(t, i == len(it["times"]) - 1) for i, t in enumerate(it["times"])]
     return {"total": cl[-1] / o - 1, "cagr": np.nan, "blocks": blocks, "labels": labels,
             "ups": sum(b > 0 for b in blocks), "start": it["date"], "end": it["date"],
             "p0": o, "p1": cl[-1], "is1d": True, "upto": it.get("upto", "")}
@@ -986,6 +980,10 @@ def slot_start(label):
 def missing_note(r, ref_slots):
     """1일 화면에서 빠진 시간 칸 설명: 중간 칸은 거래가 없어서, 마지막 칸은 마감 가격이 아직 없어서"""
     have = {slot_start(x) for x in r["labels"]}
+    last_lab = r["labels"][-1] if r["labels"] else ""
+    if "마감까지" in last_lab:   # 마지막 칸이 마감까지 이어지면 그 뒤 칸들은 빠진 게 아님
+        tail_from = slot_start(last_lab)
+        have |= {x for x in ref_slots if x >= tail_from}
     miss = [t for t in ref_slots if t not in have]
     if not miss:
         return ""
