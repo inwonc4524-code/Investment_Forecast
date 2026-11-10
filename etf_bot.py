@@ -100,6 +100,24 @@ def fix_pence(s):
     return s
 
 
+def despike(s):
+    """하루만 확 튀었다가(±10% 넘게) 다음 날 제자리로 돌아온 가격은 잘못 찍힌 값이라 뺌"""
+    if len(s) < 3:
+        return s
+    v = s.values
+    bad = []
+    for i in range(1, len(v) - 1):
+        a, b = v[i] / v[i - 1] - 1, v[i + 1] / v[i] - 1
+        if abs(a) > 0.10 and abs(b) > 0.10 and a * b < 0 and abs(v[i + 1] / v[i - 1] - 1) < 0.05:
+            bad.append(s.index[i])
+    if bad:
+        CHECK["spikes"].append(f"{len(bad)}일")
+    return s.drop(bad)
+
+
+CHECK = {"spikes": [], "stale_fixed": [], "stale_left": [], "intra_bad": []}   # 점검 기록 → docs/check.json
+
+
 def _pick(raw, key, name):
     """다운로드 결과에서 수익률 계산용(배당 포함 수정종가)을 돌려주고, 실제 가격은 RAW에 저장"""
     d = raw[key] if isinstance(raw.columns, pd.MultiIndex) else raw
@@ -109,6 +127,10 @@ def _pick(raw, key, name):
     adj = adj[adj > 0]
     if str(name).endswith(".L"):
         real, adj = fix_pence(real), fix_pence(adj)
+    n0 = len(CHECK["spikes"])
+    real, adj = despike(real), despike(adj)
+    if len(CHECK["spikes"]) > n0:
+        CHECK["spikes"][n0:] = [f"{name}"]
     if len(real):
         RAW[name] = real
     return adj
@@ -206,6 +228,7 @@ def fetch_intraday(tickers):
             pass
     for t in bad:
         INTRA.pop(t, None)
+    CHECK["intra_bad"] += bad
     if bad:
         print("시간별 가격이 이상해서 '하루 전체'로 바꾼 종목:", ", ".join(bad))
     print(f"시간별 가격을 받은 곳: {len(INTRA)}/{len(tickers)}")
@@ -331,6 +354,30 @@ def top_up_recent(closes, tickers):
             pass
     if filled:
         print(f"최근 날짜를 보충한 종목 {len(filled)}개:", ", ".join(filled[:20]))
+    CHECK["stale_fixed"] += filled
+    # 그래도 다른 종목보다 2일 넘게 밀린 종목은 하나씩 따로 받아봄
+    newest = max(s.index[-1] for s in closes.values())
+    stale = [t for t, s in closes.items() if len(pd.bdate_range(s.index[-1], newest)) > 3]
+    for t in stale:
+        try:
+            h = yf.Ticker(t).history(period="1mo", auto_adjust=False)
+            c = h["Close"].dropna()
+            c.index = c.index.tz_localize(None).normalize() if c.index.tz is not None else c.index.normalize()
+            if t.endswith(".L"):
+                c = fix_pence(c)
+            s = closes[t]
+            last = s.index[-1]
+            newer = c[c.index > last]
+            if newer.empty or last not in c.index:
+                CHECK["stale_left"].append(f"{t} ({last.date()}까지, 따로 받은 것도 {c.index[-1].date() if len(c) else '없음'}까지)")
+                continue
+            closes[t] = pd.concat([s, s.iloc[-1] * newer / float(c.loc[last])])
+            real = RAW.get(t)
+            if real is not None and real.index[-1] == last:
+                RAW[t] = pd.concat([real, newer])
+            CHECK["stale_fixed"].append(t + " (따로)")
+        except Exception as e:
+            CHECK["stale_left"].append(f"{t} 오류: {e}")
 
 
 def demo_prices(tickers, seed=7):
@@ -1092,6 +1139,13 @@ def main():
     with open(os.path.join(DOCS, "version.json"), "w", encoding="utf-8") as f:
         json.dump({"build": build}, f)
     df.to_csv(os.path.join(DOCS, "latest.csv"), index=False, encoding="utf-8-sig")
+    try:   # 점검 기록 (빠진 종목·밀린 날짜·고친 가격)
+        CHECK["missing"] = [t for t in tickers if t not in set(df.ticker)]
+        CHECK["last_date"] = df.groupby("market").date.max().to_dict()
+        with open(os.path.join(DOCS, "check.json"), "w", encoding="utf-8") as f:
+            json.dump(CHECK, f, ensure_ascii=False, indent=1, default=str)
+    except Exception as e:
+        print("점검 기록 실패:", e)
 
     close = os.environ.get("CLOSE_MARKET", "").upper()   # 장 마감 때 실행하면 KR/CN/HK
     msg = close_message(df, close, today) if close else phone_message(df, long, today)
