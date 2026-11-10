@@ -289,7 +289,9 @@ def fetch_intraday(tickers):
             if real is not None and len(real) >= 2 and real.index[-1].normalize() == day:
                 daily = float(real.iloc[-1] / real.iloc[-2] - 1)
                 intra = it["close"][-1] / it["open"] - 1
-                if abs(intra - daily) > 0.07:
+                gap = it["open"] / float(real.iloc[-2]) - 1   # 장 시작가가 전날 마감보다 얼마나 떨어져 있나
+                # 장 시작부터 크게 오르거나 내린 날(반도체 +8% 등)은 정상이라, 시작가가 말이 안 되게 튈 때(±25% 넘게)만 거름
+                if abs(intra - daily) > 0.07 and abs(gap) > 0.25:
                     bad.append(t)
         except Exception:
             pass
@@ -941,6 +943,11 @@ def why_html(text):
 def long_panel(rows, years):
     ranked = long_rank(rows)
     _, unit, cnt, pname = PERIOD_INFO[years]
+    mx = {}   # 1일: 나라마다 가장 많은 시간 칸 수 (거래가 없어 빠진 칸이 있는지 알려주려고)
+    if years == "1d":
+        for r in rows:
+            if not r.get("daily"):
+                mx[r["market"]] = max(mx.get(r["market"], 0), len(r["blocks"]))
     if not rows:
         return (f"<p class='empty big'>여기엔 생긴 지 {pname}이 넘은 ETF가 없어요.<br>"
                 f"생긴 지 {pname}이 안 된 ETF는 계산할 수 없어요.</p>")
@@ -954,7 +961,7 @@ def long_panel(rows, years):
         medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}")
         ups = r["ups"]
         rest = sum(b is None for b in r["blocks"])
-        count_text = (day_text(r) + (f" · 하루 동안 {updown(r['total'])} 올랐어요 <span class='hint'>(1시간 단위 가격이 없어서 하루 전체로 봤어요)</span>" if r.get("daily") else f" · {len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요")) if years == "1d" else f"{len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요" + (f" ({rest}{cnt}은 장이 쉬었어요)" if rest else "") + (
+        count_text = (day_text(r) + (f" · 하루 동안 {updown(r['total'])} 올랐어요 <span class='hint'>(1시간 단위 가격이 없어서 하루 전체로 봤어요)</span>" if r.get("daily") else f" · {len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요" + (f" <span class='hint'>(거래가 없던 {mx[r['market']] - len(r['blocks'])}시간은 빠졌어요)</span>" if mx.get(r["market"], 0) > len(r["blocks"]) else ""))) if years == "1d" else f"{len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요" + (f" ({rest}{cnt}은 장이 쉬었어요)" if rest else "") + (
             " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else "")
         n_blocks = len(r["blocks"])
         avg = " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else ""
