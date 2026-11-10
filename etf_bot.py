@@ -321,6 +321,12 @@ def apply_intraday(df):
         if it and it["date"].strftime("%Y-%m-%d") == r.date:
             return it["close"][-1] / it["open"] - 1
         return r.r1d
+    def prev(r):   # 전날 마감 → 오늘 마감 (증권사 앱의 '오늘 등락률'과 같은 방식, 실제 가격 기준)
+        real = RAW.get(r.ticker)
+        if real is not None and len(real) >= 2 and real.index[-1].strftime("%Y-%m-%d") == r.date:
+            return float(real.iloc[-1] / real.iloc[-2] - 1)
+        return r.r1d
+    df["rprev"] = df.apply(prev, axis=1)
     df["r1d"] = df.apply(one, axis=1)
     return df
 
@@ -886,7 +892,7 @@ def recent_panel(sub, mk):
              p["stable"], lambda r: f"흔들림 {shake(r.vol60)}")
     )
 
-    cols = [("name", "이름"), ("category", "무엇을 담았나"), ("r1d", "1일"), ("r1w", "1주"), ("r1m", "1달"), ("r3m", "3달"),
+    cols = [("name", "이름"), ("category", "무엇을 담았나"), ("rprev", "전날대비"), ("r1d", "1일(장중)"), ("r1w", "1주"), ("r1m", "1달"), ("r3m", "3달"),
             ("r6m", "6달"), ("r12m", "1년"), ("from_high", "제일 비쌀 때보다"),
             ("vol60", "흔들림"), ("total", "점수")]
 
@@ -940,14 +946,34 @@ def why_html(text):
     return f"<span class='why'>💬 {E(text)}</span>" if text else ""
 
 
+def slot_start(label):
+    """'09:00부터 1시간' → '09:00'"""
+    return str(label).split("부터")[0]
+
+
+def missing_note(r, ref_slots):
+    """1일 화면에서 빠진 시간 칸 설명: 중간 칸은 거래가 없어서, 마지막 칸은 마감 가격이 아직 없어서"""
+    have = {slot_start(x) for x in r["labels"]}
+    miss = [t for t in ref_slots if t not in have]
+    if not miss:
+        return ""
+    parts = []
+    mid = [t for t in miss if ref_slots and t != ref_slots[-1]]
+    if mid:
+        parts.append(", ".join(t.lstrip("0") for t in mid) + " 칸은 그 1시간 동안 거래가 없어서")
+    if ref_slots and ref_slots[-1] in miss:
+        parts.append(f"{ref_slots[-1].lstrip('0')}~마감 칸은 마감 가격이 아직 안 들어와서")
+    return " <span class='hint'>(" + " / ".join(parts) + " 빠졌어요)</span>"
+
+
 def long_panel(rows, years):
     ranked = long_rank(rows)
     _, unit, cnt, pname = PERIOD_INFO[years]
-    mx = {}   # 1일: 나라마다 가장 많은 시간 칸 수 (거래가 없어 빠진 칸이 있는지 알려주려고)
+    ref = {}   # 1일: 나라마다 칸이 가장 많은 종목의 시간표 (빠진 칸이 몇 시인지 알려주려고)
     if years == "1d":
         for r in rows:
-            if not r.get("daily"):
-                mx[r["market"]] = max(mx.get(r["market"], 0), len(r["blocks"]))
+            if not r.get("daily") and len(r["blocks"]) > len(ref.get(r["market"], [])):
+                ref[r["market"]] = [slot_start(x) for x in r["labels"]]
     if not rows:
         return (f"<p class='empty big'>여기엔 생긴 지 {pname}이 넘은 ETF가 없어요.<br>"
                 f"생긴 지 {pname}이 안 된 ETF는 계산할 수 없어요.</p>")
@@ -961,7 +987,7 @@ def long_panel(rows, years):
         medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}")
         ups = r["ups"]
         rest = sum(b is None for b in r["blocks"])
-        count_text = (day_text(r) + (f" · 하루 동안 {updown(r['total'])} 올랐어요 <span class='hint'>(1시간 단위 가격이 없어서 하루 전체로 봤어요)</span>" if r.get("daily") else f" · {len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요" + (f" <span class='hint'>(거래가 없던 {mx[r['market']] - len(r['blocks'])}시간은 빠졌어요)</span>" if mx.get(r["market"], 0) > len(r["blocks"]) else ""))) if years == "1d" else f"{len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요" + (f" ({rest}{cnt}은 장이 쉬었어요)" if rest else "") + (
+        count_text = (day_text(r) + (f" · 하루 동안 {updown(r['total'])} 올랐어요 <span class='hint'>(1시간 단위 가격이 없어서 하루 전체로 봤어요)</span>" if r.get("daily") else f" · {len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요" + missing_note(r, ref.get(r["market"], [])))) if years == "1d" else f"{len(r['blocks'])}{cnt} 중 <b>{ups}{cnt}</b> 올랐어요" + (f" ({rest}{cnt}은 장이 쉬었어요)" if rest else "") + (
             " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else "")
         n_blocks = len(r["blocks"])
         avg = " · 1년에 평균 " + updown(r["cagr"]) if isinstance(years, int) and years > 1 else ""
@@ -1164,6 +1190,8 @@ def dashboard(df, long, today, demo, build=""):
 &nbsp;&nbsp;🐢 천천히 꾸준히: 가격이 덜 출렁이는 것<br><br>
 <b>표에 나오는 말</b><br>
 &nbsp;&nbsp;<b>무엇을 담았나</b>: 바구니에 어떤 회사들이 들어 있는지 (예: 반도체 회사들)<br>
+&nbsp;&nbsp;<b>전날대비</b>: 전날 마감 가격과 비교해 오늘 얼마나 올랐는지 (증권사 앱의 '오늘 등락률'과 같아요)<br>
+&nbsp;&nbsp;<b>1일(장중)</b>: 오늘 장이 열렸을 때 가격과 비교해 마감까지 얼마나 올랐는지<br>
 &nbsp;&nbsp;<b>흔들림</b>: 가격이 하루하루 얼마나 크게 오르내리는지 (작음 · 보통 · 큼)<br>
 &nbsp;&nbsp;<b>제일 비쌀 때보다</b>: 지난 1년 중 가장 비쌌던 날보다 지금 얼마나 싸졌는지<br>
 &nbsp;&nbsp;<span class="up">빨간 숫자</span>는 올랐다는 뜻, <span class="down">파란 숫자</span>는 내렸다는 뜻이에요<br><br>
