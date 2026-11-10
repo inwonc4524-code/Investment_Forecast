@@ -230,6 +230,10 @@ def fill_close(t, it):
     _h, _m = map(int, CLOSE_LOCAL[local_tz(t)].split(":"))
     _close = it["times"][-1].normalize() + pd.Timedelta(hours=_h, minutes=_m)
     upto = f"{_end.hour}시" if _end <= _close else (f"{_h}시" if _m == 0 else f"{_h}시 {_m}분")
+    log = CHECK.setdefault("fill", {})
+    if len(it["times"]) < 7:
+        log[t] = {"마지막칸": str(it["times"][-1]), "기준일": str(it["date"]),
+                  "일봉마지막": str(real.index[-1]) if real is not None and len(real) else "없음"}
     if real is None or real.empty:
         it["upto"] = upto
         return
@@ -242,6 +246,8 @@ def fill_close(t, it):
     last = it["times"][-1]
     hh, mm = CLOSE_LOCAL[local_tz(t)].split(":")
     close_t = last.normalize() + pd.Timedelta(hours=int(hh), minutes=int(mm))
+    if t in log:
+        log[t]["결정"] = "칸추가" if last + pd.Timedelta(hours=1) < close_t else "마지막칸맞춤"
     if last + pd.Timedelta(hours=1) < close_t:      # 마감 전에 빈 시간이 있음 → 칸 추가
         it["close"].append(final)
         it["times"].append(last + pd.Timedelta(hours=1))
