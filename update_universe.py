@@ -97,7 +97,7 @@ KR_TAB = {1: "국내 시장지수", 2: "국내 업종·테마", 3: "국내 파�
 FOREIGN_KR = [   # 한국 상장 ETF 중 이 나라들에 투자하는 것 (위에서부터 먼저 맞는 것)
     ("홍콩", re.compile(r"항셍|홍콩|HSCEI|차이나H|Hang\s?Seng", re.I)),
     ("중국", re.compile(r"차이나|중국|China|과창판|심천|CSI300|A50", re.I)),
-    ("일본", re.compile(r"일본|니케이|닛케이|Nikkei|TOPIX|Japan|도쿄", re.I)),
+    ("일본", re.compile(r"일본|닛케이|니케이\s?225|Nikkei|TOPIX|Japan|도쿄", re.I)),
     ("독일", re.compile(r"독일|DAX|Germany", re.I)),
     ("싱가포르", re.compile(r"싱가포르|Singapore", re.I)),
     ("캐나다", re.compile(r"캐나다|Canada", re.I)),

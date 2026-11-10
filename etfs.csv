@@ -337,7 +337,6 @@ DFUS,Dimensional U.S. Equity Market ETF,US,Large Blend,
 2558.T,MAXIS 미국 S&P500,JP,미국 대형주(엔화),sp500
 1540.T,일본 금 현물,JP,금,gold
 EXS1.DE,iShares Core DAX,DE,독일 대형주(DAX),
-XDAX.DE,Xtrackers DAX,DE,독일 대형주(DAX),
 EXW1.DE,iShares EURO STOXX 50,DE,유럽 대형주(유로스톡스50),world
 EXSA.DE,iShares STOXX Europe 600,DE,유럽 전체시장,world
 EXV1.DE,iShares STOXX Europe 600 은행,DE,유럽 은행,world
@@ -391,8 +390,6 @@ SGLN.L,iShares 금 현물 (영국),GB,금,gold
 195920.KS,TIGER 일본TOPIX(합성 H),KR,일본 투자 (한국 상장),world
 469160.KS,ACE 일본반도체,KR,일본 투자 (한국 상장),semi|world
 488290.KS,MIDAS 일본테크액티브,KR,일본 투자 (한국 상장),tech|world
-463690.KS,KODEX 미국S&P500커뮤니케이션,KR,일본 투자 (한국 상장),sp500
 488480.KS,RISE 일본섹터TOP4Plus,KR,일본 투자 (한국 상장),world
 316300.KS,ACE 싱가포르리츠,KR,싱가포르 투자 (한국 상장),
 411860.KS,KIWOOM 독일DAX,KR,독일 투자 (한국 상장),
-315270.KS,TIGER 200커뮤니케이션서비스,KR,일본 투자 (한국 상장),

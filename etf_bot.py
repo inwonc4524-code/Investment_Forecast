@@ -190,11 +190,24 @@ def fetch_intraday(tickers):
                         "close": [float(x) for x in day.Close], "times": list(day.index)}
         except Exception:
             pass
+    bad = []
     for t, it in INTRA.items():
         try:
             fill_close(t, it)
+            # 장 시작가가 이상하게 찍히는 경우(예: +18%) 거르기: 하루 등락(전날 마감→오늘 마감)과 비교
+            real = RAW.get(t)
+            day = it["date"].normalize()
+            if real is not None and len(real) >= 2 and real.index[-1].normalize() == day:
+                daily = float(real.iloc[-1] / real.iloc[-2] - 1)
+                intra = it["close"][-1] / it["open"] - 1
+                if abs(intra - daily) > 0.07:
+                    bad.append(t)
         except Exception:
             pass
+    for t in bad:
+        INTRA.pop(t, None)
+    if bad:
+        print("시간별 가격이 이상해서 '하루 전체'로 바꾼 종목:", ", ".join(bad))
     print(f"시간별 가격을 받은 곳: {len(INTRA)}/{len(tickers)}")
 
 
@@ -279,10 +292,45 @@ def fetch_prices(tickers):
                     closes[t] = s
             except Exception:
                 pass
+    top_up_recent(closes, tickers)
     missing = [t for t in tickers if t not in closes]
     if missing:
         print("가격을 못 받은 종목:", ", ".join(missing))
     return closes
+
+
+def top_up_recent(closes, tickers):
+    """야후에서 '전체 기간'으로 받으면 최근 며칠이 빠질 때가 있어서(독일·영국 등),
+    최근 1달을 따로 받아 더 최신 날짜를 이어 붙임 (가격 비율로 이어서 배당 조정과 맞춤)"""
+    import yfinance as yf
+    try:
+        rec = yf.download(tickers, period="1mo", auto_adjust=False,
+                          progress=False, group_by="ticker", threads=True)
+    except Exception as e:
+        print("최근 가격 보충 실패:", e)
+        return
+    filled = []
+    for t in list(closes):
+        try:
+            d = rec[t] if isinstance(rec.columns, pd.MultiIndex) else rec
+            c = d["Close"].dropna()
+            c = c[c > 0]
+            if t.endswith(".L"):
+                c = fix_pence(c)
+            s = closes[t]
+            last = s.index[-1]
+            newer = c[c.index > last]
+            if newer.empty or last not in c.index:
+                continue
+            closes[t] = pd.concat([s, s.iloc[-1] * newer / float(c.loc[last])])
+            real = RAW.get(t)
+            if real is not None and real.index[-1] == last:
+                RAW[t] = pd.concat([real, newer])
+            filled.append(t)
+        except Exception:
+            pass
+    if filled:
+        print(f"최근 날짜를 보충한 종목 {len(filled)}개:", ", ".join(filled[:20]))
 
 
 def demo_prices(tickers, seed=7):
@@ -901,7 +949,7 @@ if(h[2])st.y=h[2];if(isT(h[3]))st.t=h[3];draw();})();
 KR_LINKS = [   # 한국 상장 ETF 이름 → 그 나라 탭에도 보여줌 (위에서부터 먼저 맞는 것)
     ("HK", re.compile(r"항셍|홍콩|HSCEI|차이나H|Hang\s?Seng", re.I)),
     ("CN", re.compile(r"차이나|중국|China|CSI|과창판|심천|A50", re.I)),
-    ("JP", re.compile(r"일본|니케이|닛케이|Nikkei|TOPIX|Japan|도쿄", re.I)),
+    ("JP", re.compile(r"일본|닛케이|니케이\s?225|Nikkei|TOPIX|Japan|도쿄", re.I)),
     ("DE", re.compile(r"독일|DAX|Germany", re.I)),
     ("SG", re.compile(r"싱가포르|Singapore", re.I)),
     ("CA", re.compile(r"캐나다|Canada", re.I)),
