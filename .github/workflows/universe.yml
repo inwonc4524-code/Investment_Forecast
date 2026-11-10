@@ -7,7 +7,7 @@ on:
   workflow_dispatch: {}   # Actions 화면에서 "Run workflow" 버튼으로 바로 실행
   push:                   # 업데이트 규칙을 고치면 바로 한 번 실행
     branches: [main]
-    paths: ["update_universe.py", ".github/workflows/universe.yml"]
+    paths: ["update_universe.py", "sync_names.py", ".github/workflows/universe.yml"]
 
 concurrency:
   group: bot
@@ -32,6 +32,9 @@ jobs:
 
       - name: 순위 받아와서 목록에 더하기
         run: python update_universe.py
+
+      - name: 이름을 네이버 공식 이름으로 맞추기
+        run: python sync_names.py etfs.csv
 
       - name: 늘어난 목록으로 대시보드 다시 만들기 (알림은 안 보냄)
         env:
