@@ -863,18 +863,32 @@ def theme_names(r):
 
 
 def send_ntfy(title, message, click_url):
-    topic = os.environ.get("NTFY_TOPIC")
-    if not topic:
-        print("NTFY_TOPIC 이 없어서 알림은 건너뜁니다.")
-        return
-    payload = {"topic": topic, "title": title, "message": message,
-               "tags": ["chart_with_upwards_trend"]}
-    if click_url:
-        payload["click"] = click_url
-        payload["actions"] = [{"action": "view", "label": "대시보드 열기", "url": click_url}]
-    r = requests.post("https://ntfy.sh/", data=json.dumps(payload).encode("utf-8"),
-                      headers={"Content-Type": "application/json"}, timeout=20)
-    print("ntfy 전송:", r.status_code)
+    """신문처럼 보이는 알림: 헤드라인 제목 + 조선일보 명조체 신문 카드 그림 (newscard.py)."""
+    import newscard
+    lines = message.split("\n")
+    is_close = "장 마감" in title
+    top = None
+    if is_close:
+        top = next((l[3:].strip() for l in lines if re.match(r"^1\. ", l)), None)
+    else:
+        top = next((l.split("오늘의 추천:", 1)[1].strip() for l in lines if "오늘의 추천:" in l), None)
+    short = re.sub(r"\s+\(.*?\)", "", top or "").replace(" 🔥", "").strip()
+    head = (f"1위 {short}" if short else title)
+    if is_close:
+        new_title = f"{title.split('·')[0].strip()} · 1위 {short}" if short else title
+    else:
+        new_title = f"📰 {title} · 1위 {short}" if short else f"📰 {title}"
+    m = re.search(r"([+\-−])\d+(?:\.\d+)?%", short)
+    down = bool(m and m.group(1) in "-−")
+    skip = ("※", "📅", "🔥 =", "🔝", "(아직")
+    body = [l for l in lines if l.strip() and not l.strip().startswith(skip) and "주식시장이 끝났어요" not in l]
+    card = {"paper": "ETF 신문", "kicker": "장 마감" if is_close else "오늘의 추천",
+            "headline": (title.split("·")[0].strip() + " · " + head) if is_close else f"오늘의 추천 {head}",
+            "lines": body}
+    actions = [{"action": "view", "label": "대시보드 열기", "url": click_url}] if click_url else None
+    newscard.send(os.environ.get("NTFY_TOPIC"), new_title, newscard.tidy(message), click=click_url,
+                  tags=["chart_with_downwards_trend" if down else "chart_with_upwards_trend"],
+                  actions=actions, card=card)
 
 
 # ───────────────────────── 6. 웹 대시보드 ─────────────────────────
