@@ -8,7 +8,14 @@ on:
     - cron: "11 7 * * 1-5"    # 오후 4시 11분 — 한국장(3시 30분) 마감 뒤
     - cron: "37 7 * * 1-5"    # 오후 4시 37분 — 중국장(4시) 마감 뒤
     - cron: "23 8 * * 1-5"    # 오후 5시 23분 — 홍콩장(5시) 마감 뒤
-  workflow_dispatch: {}   # Actions 화면에서 "Run workflow" 버튼으로 바로 실행
+  workflow_dispatch:      # Actions 화면에서 "Run workflow" 버튼으로 바로 실행
+    inputs:
+      close_market:
+        description: "장 마감 알림을 다시 받으려면 나라를 고르세요 (비우면 아침 추천 알림)"
+        required: false
+        default: ""
+        type: choice
+        options: ["", "KR", "CN", "HK"]
   push:                   # 종목 목록이나 코드를 고치면 바로 한 번 실행
     branches: [main]
     paths: ["etf_bot.py", "newscard.py", "requirements.txt", "etfs.csv", "reasons.json", "crosscheck.py", ".github/workflows/etf-bot.yml"]
@@ -37,7 +44,7 @@ jobs:
       - name: ETF 분석 + 휴대폰 알림
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          CLOSE_MARKET: ${{ github.event.schedule == '11 7 * * 1-5' && 'KR' || github.event.schedule == '37 7 * * 1-5' && 'CN' || github.event.schedule == '23 8 * * 1-5' && 'HK' || '' }}
+          CLOSE_MARKET: ${{ github.event.schedule == '11 7 * * 1-5' && 'KR' || github.event.schedule == '37 7 * * 1-5' && 'CN' || github.event.schedule == '23 8 * * 1-5' && 'HK' || inputs.close_market || '' }}
         run: python etf_bot.py
 
       - name: 대시보드 저장
