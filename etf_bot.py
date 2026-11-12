@@ -847,6 +847,11 @@ def won(total):
 
 def phone_message(df, long, today):
     out = [f"📅 {today} 기준"]
+    us = df[(df.market == "US") & (df.r1d > 0)].sort_values("r1d", ascending=False).head(5)
+    if not us.empty:   # 어젯밤 끝난 미국장 — 맨 위에 먼저
+        d = pd.Timestamp(us.date.max())
+        out.append(f"\n🇺🇸 어젯밤 미국장({d.month}월 {d.day}일) 많이 오른 ETF")
+        out += [f"{i}. {r['name']} {pct(r.r1d)}" for i, (_, r) in enumerate(us.iterrows(), 1)]
     others = []
     for code, flag, label in MARKETS:
         sub = df[df.market == code]
@@ -880,11 +885,6 @@ def phone_message(df, long, today):
         b = best[0]
         out.append(f"\n🌱 10년 꾸준히 1등: {FLAG.get(b['market'], '')} {b['name']}"
                    f" — 10번 중 {b['ups']}번 오름, 100만 원 → {won(b['total'])}")
-    us = df[(df.market == "US") & (df.r1d > 0)].sort_values("r1d", ascending=False).head(3)
-    if not us.empty:
-        d = pd.Timestamp(us.date.max())
-        names = ", ".join(f"{r['name']} {pct(r.r1d)}" for _, r in us.iterrows())
-        out.append(f"\n🇺🇸 미국장 마감({d.month}월 {d.day}일) 하루 동안 많이 오른 곳: {names}")
     out.append("\n🔥 = 너무 빨리 올라서 조심")
     out.append("※ 지나간 숫자로 계산한 참고용이에요. 꼭 오른다는 뜻도, 사라는 뜻도 아니에요.")
     return "\n".join(out)
@@ -899,12 +899,16 @@ def close_message(df, market, today):
         return None
     last = sub.date.max()
     late = "" if last == today else f"\n(아직 오늘 가격이 안 들어와서 {last} 기준이에요)"
+    when = "오늘"
+    if market == "US":   # 미국장은 한국 시간 새벽에 끝나서 날짜가 하루 전이에요
+        d = pd.Timestamp(last)
+        late, when = "", f"어젯밤(미국 {d.month}월 {d.day}일)"
     up = sub[sub.r1d > 0]
     out = [f"{flag} {name} 주식시장이 끝났어요 ({CLOSE_KST.get(market, '')} 마감){late}", ""]
     if up.empty:
-        out.append("오늘은 오른 곳이 없어요. 다 같이 쉬는 날이에요 🛌")
+        out.append(f"{when}은 오른 곳이 없어요. 다 같이 쉬는 날이에요 🛌")
     else:
-        out.append("🔝 오늘 장 시작부터 마감까지 많이 오른 순서")
+        out.append(f"🔝 {when} 장 시작부터 마감까지 많이 오른 순서")
         for i, (_, r) in enumerate(up.head(5).iterrows(), 1):
             out.append(f"{i}. {r['name']} {pct(r.r1d)}" + (f"  ({theme_names(r)})" if theme_names(r) else ""))
     down = sub[sub.r1d < 0].tail(1)
@@ -1418,6 +1422,9 @@ def main():
                           f"{url}#long-{close.lower()}-1d" if url else url)
         else:
             send_ntfy("오늘의 ETF 추천", msg, url)
+            us_msg = close_message(df, "US", today)   # 어젯밤 끝난 미국장도 따로 알림
+            if us_msg:
+                send_ntfy("🇺🇸 미국장 마감 · 어젯밤 많이 오른 ETF", us_msg, f"{url}#long-us-1d" if url else url)
 
 
 if __name__ == "__main__":
