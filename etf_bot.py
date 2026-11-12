@@ -83,7 +83,7 @@ MKT_NAME = {"KR": "한국", "US": "미국", "CN": "중국", "HK": "홍콩", "JP"
 # 아직 장이 안 끝났으면 '오늘' 가격은 진행 중이라 빼고 어제 마감까지만 써요
 EXCH = {"KR": ("Asia/Seoul", "15:50"), "US": ("America/New_York", "16:20"), "CN": ("Asia/Shanghai", "15:20"),
         "HK": ("Asia/Hong_Kong", "16:30"), "JP": ("Asia/Tokyo", "15:50"), "VN": ("Asia/Ho_Chi_Minh", "15:20"),
-        "ID": ("Asia/Jakarta", "16:30"), "DE": ("Europe/Berlin", "17:50"), "UK": ("Europe/London", "16:50"),
+        "ID": ("Asia/Jakarta", "16:30"), "DE": ("Europe/Berlin", "17:50"), "UK": ("Europe/London", "16:50"), "GB": ("Europe/London", "16:50"),
         "SG": ("Asia/Singapore", "17:30"), "CA": ("America/Toronto", "16:20")}
 MKT_OF = {}   # 티커 → 나라
 
