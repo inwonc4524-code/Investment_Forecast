@@ -134,11 +134,13 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
     pick = list(dict.fromkeys(pick))
 
     def one(t):
-        time.sleep(0.15)
+        time.sleep(0.05)
         return t, source(t, mkt_of.get(t))
 
-    with ThreadPoolExecutor(max_workers=4) as ex:
+    t0 = time.time()
+    with ThreadPoolExecutor(max_workers=8) as ex:   # 여러 곳을 동시에 확인 (빠르게)
         got = dict(ex.map(one, pick))
+    took = time.time() - t0
 
     for t, src in got.items():
         if src is None or len(src) < 3:
@@ -180,7 +182,7 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
         except Exception:
             pass
     print(f"다른 사이트와 비교: {REPORT['source_ok']}곳 비교 · 마지막 가격 고침 {len(REPORT['fixed_last'])}곳 · "
-          f"순위에서 뺀 곳 {len(REPORT['excluded'])}곳 · 비교 자료 없음 {REPORT['source_none']}곳")
+          f"순위에서 뺀 곳 {len(REPORT['excluded'])}곳 · 비교 자료 없음 {REPORT['source_none']}곳 · {took:.0f}초")
     return BAD
 
 
