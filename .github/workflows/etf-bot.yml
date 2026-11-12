@@ -18,7 +18,7 @@ on:
         options: ["", "KR", "CN", "HK"]
   push:                   # 종목 목록이나 코드를 고치면 바로 한 번 실행
     branches: [main]
-    paths: ["etf_bot.py", "newscard.py", "requirements.txt", "etfs.csv", "reasons.json", "crosscheck.py", ".github/workflows/etf-bot.yml"]
+    paths: ["etf_bot.py", "newscard.py", "requirements.txt", "etfs.csv", "reasons.json", "crosscheck.py", ".github/workflows/etf-bot.yml", "pricecache.py"]
 
 concurrency:            # 여러 번 겹쳐 실행되면 차례로 (저장할 때 부딪히지 않게)
   group: bot
@@ -37,6 +37,13 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+
+      - name: 받아 둔 가격 불러오기 (최근 1달만 새로 받아서 빠르게)
+        uses: actions/cache@v4
+        with:
+          path: .pricecache
+          key: prices-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: prices-
 
       - name: 패키지 설치
         run: pip install -r requirements.txt
