@@ -95,13 +95,42 @@ def _splice(old, new):
     return pd.concat([keep, new[new.index >= d0]])
 
 
-def download(tickers, batch=120, pause=2, recent="1mo"):
-    """종목들의 날마다 가격(Close·Adj Close)을 돌려줌. raw[종목] 으로 꺼내 씀."""
+def save_state(name, obj):
+    """실행 사이에 이어 쓰는 작은 기록(시간별 가격 등)을 가격 저장소 옆에 보관"""
+    try:
+        os.makedirs(os.path.dirname(PATH), exist_ok=True)
+        with gzip.open(os.path.join(os.path.dirname(PATH), f"{name}.pkl.gz"), "wb", compresslevel=3) as f:
+            pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)
+    except Exception as e:
+        print(f"{name} 저장 실패:", e)
+
+
+def load_state(name, default=None):
+    try:
+        with gzip.open(os.path.join(os.path.dirname(PATH), f"{name}.pkl.gz"), "rb") as f:
+            return pickle.load(f)
+    except Exception:
+        return default
+
+
+def download(tickers, batch=120, pause=2, recent="1mo", fresh=None, _nofull=False):
+    """종목들의 날마다 가격(Close·Adj Close)을 돌려줌. raw[종목] 으로 꺼내 씀.
+    fresh 를 주면 그 종목들만 새로 받고, 나머지는 저장해 둔 가격을 그대로 써요 (장 마감 알림용, 빠르게)."""
     tickers = list(dict.fromkeys(tickers))
+    if not _nofull:
+        MODE.update(mode="", full=0, inc=0, fallback=0)
     data, full_at = _load()
+    if fresh is not None and data:
+        fresh = set(fresh)
+        keep = {t: data[t] for t in tickers if t in data and t not in fresh}
+        need = [t for t in tickers if t not in keep]
+        sub = download(need, batch, pause, recent, _nofull=True) if need else Raw()
+        MODE["mode"] = "part"
+        print(f"이번엔 {len(need)}곳만 새로 받고 {len(keep)}곳은 저장해 둔 가격을 썼어요")
+        return Raw({**keep, **sub})
     now = datetime.now(timezone.utc)
     age = (now - full_at).days if full_at else 999
-    full = (not data) or age >= FULL_EVERY_DAYS or os.environ.get("PRICE_FULL")
+    full = (not data) or (not _nofull and (age >= FULL_EVERY_DAYS or os.environ.get("PRICE_FULL")))
     if full:
         MODE.update(mode="full")
         got = _grab(tickers, "max", batch, pause)

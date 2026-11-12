@@ -121,10 +121,13 @@ def trim_all(closes):
 CROSS_STATE = os.path.join(DOCS, "crosscheck_state.json")
 
 
-def cross_all(closes, universe):
+def cross_all(closes, universe, only=None):
     """야후 가격을 다른 사이트와 비교 (틀린 마지막 가격은 고치고, 크게 다른 기간은 순위에서 뺌)"""
     try:
-        crosscheck.run(closes, RAW, MKT_OF, dict(zip(universe.ticker, universe.name)), CROSS_STATE)
+        sub = closes if only is None else {t: closes[t] for t in only if t in closes}   # 장 마감 알림 때는 그 나라만
+        crosscheck.run(sub, RAW, MKT_OF, dict(zip(universe.ticker, universe.name)), CROSS_STATE)
+        if only is not None:
+            closes.update(sub)
         crosscheck.save(os.path.join(DOCS, "crosscheck.json"))
     except Exception as e:
         print("다른 사이트와 비교 실패:", e)
@@ -438,13 +441,13 @@ def intraday_term(ticker, s=None):
             "p0": o, "p1": cl[-1], "is1d": True, "upto": it.get("upto", "")}
 
 
-def fetch_prices(tickers):
+def fetch_prices(tickers, fresh=None):
     """야후 파이낸스에서 상장 이후 전체 기간의 가격(배당 포함 수정종가)을 받아옵니다."""
     import yfinance as yf
 
     import pricecache
     # 받아 둔 가격은 저장해 두고 최근 1달만 새로 받아 이어 붙임 (7일마다 한 번은 전체 새로)
-    raw = pricecache.download(tickers, batch=200, pause=2)
+    raw = pricecache.download(tickers, batch=200, pause=2, fresh=fresh)
     closes = {}
     for t in tickers:
         try:
@@ -1346,18 +1349,33 @@ def main():
     universe = load_universe()
     tickers = universe.ticker.tolist()
     MKT_OF.update(dict(zip(universe.ticker, universe.market)))
-    closes = demo_prices(tickers) if args.demo else fetch_prices(tickers)
+    # 장 마감 알림 때는 그 나라만 새로 계산하고, 다른 나라는 지난 실행 결과를 그대로 써요 (빠르게)
+    only = [c.strip() for c in os.environ.get("ONLY_MARKETS", "").upper().split(",") if c.strip()]
+    target = [t for t in tickers if MKT_OF.get(t) in only] if only else None
+    if only and not args.demo:
+        print(f"이번엔 {', '.join(only)} 나라만 새로 계산해요 ({len(target)}곳)")
+    closes = demo_prices(tickers) if args.demo else fetch_prices(tickers, fresh=target)
     if args.demo:
         demo_intraday(closes)
     else:
         from concurrent.futures import ThreadPoolExecutor
+        import pricecache
         tick("가격 받기")
         trim_all(closes)
         # 빠르게: 네이버와 비교하는 일은 옆에서 동시에 하고, 그동안 야후에서 시간별 가격을 받음
         with ThreadPoolExecutor(max_workers=1) as ex:
-            cross = ex.submit(cross_all, closes, universe)
-            fetch_intraday(tickers, wait=cross.result)
+            cross = ex.submit(cross_all, closes, universe, target)
+            fetch_intraday(target or tickers, wait=cross.result)
         tick("다른 사이트 비교 + 시간별 가격")
+        if only:   # 다른 나라는 지난 실행의 시간별 가격·비교 결과를 이어서 씀
+            for t, v in (pricecache.load_state("intra", {}) or {}).items():
+                if MKT_OF.get(t) not in only and t not in INTRA:
+                    INTRA[t] = v
+            for t, v in (pricecache.load_state("bad", {}) or {}).items():
+                if MKT_OF.get(t) not in only:
+                    crosscheck.BAD.setdefault(t, v)
+        pricecache.save_state("intra", dict(INTRA))
+        pricecache.save_state("bad", dict(crosscheck.BAD))
     df = build_table(universe, closes)
     df = apply_intraday(df)
     df = drop_bad_periods(df)

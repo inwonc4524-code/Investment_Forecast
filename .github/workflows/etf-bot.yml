@@ -11,12 +11,12 @@ on:
     # 한국시간 월~금 오후 3시 41분·4시 11분 — 한국장(3시 30분) 마감 뒤
     - cron: "41 6 * * 1-5"
     - cron: "11 7 * * 1-5"
-    # 한국시간 월~금 오후 4시 7분·37분 — 중국장(4시) 마감 뒤
-    - cron: "7 7 * * 1-5"
-    - cron: "37 7 * * 1-5"
-    # 한국시간 월~금 오후 5시 7분·37분 — 홍콩장(5시) 마감 뒤
-    - cron: "7 8 * * 1-5"
-    - cron: "37 8 * * 1-5"
+    # 한국시간 월~금 오후 4시 17분·47분 — 중국장(4시) 마감 뒤
+    - cron: "17 7 * * 1-5"
+    - cron: "47 7 * * 1-5"
+    # 한국시간 월~금 오후 5시 27분·57분 — 홍콩장(5시) 마감 뒤
+    - cron: "27 8 * * 1-5"
+    - cron: "57 8 * * 1-5"
   workflow_dispatch:      # Actions 화면에서 "Run workflow" 버튼으로 바로 실행
     inputs:
       close_market:
@@ -25,6 +25,11 @@ on:
         default: ""
         type: choice
         options: ["", "KR", "CN", "HK"]
+      no_alert:
+        description: "알림 없이 시험으로만 돌리기"
+        required: false
+        default: false
+        type: boolean
   push:                   # 종목 목록이나 코드를 고치면 바로 한 번 실행
     branches: [main]
     paths: ["etf_bot.py", "newscard.py", "requirements.txt", "etfs.csv", "reasons.json", "crosscheck.py", ".github/workflows/etf-bot.yml", "pricecache.py"]
@@ -51,12 +56,13 @@ jobs:
           M="${{ inputs.close_market }}"; NB=""; KEY=""
           case "$S" in
             "17 21 * * 1-5"|"47 21 * * 1-5") M=""; NB="06:30"; KEY="morning";;
-            "41 6 * * 1-5"|"11 7 * * 1-5") M="KR"; NB="15:45"; KEY="KR";;
-            "7 7 * * 1-5"|"37 7 * * 1-5") M="CN"; NB="16:10"; KEY="CN";;
-            "7 8 * * 1-5"|"37 8 * * 1-5") M="HK"; NB="17:10"; KEY="HK";;
+            "41 6 * * 1-5"|"11 7 * * 1-5") M="KR"; NB="15:51"; KEY="KR";;
+            "17 7 * * 1-5"|"47 7 * * 1-5") M="CN"; NB="16:21"; KEY="CN";;
+            "27 8 * * 1-5"|"57 8 * * 1-5") M="HK"; NB="17:31"; KEY="HK";;
           esac
           D=$(TZ=Asia/Seoul date +%F)
           SKIP=""
+          if [ "${{ inputs.no_alert }}" = "true" ]; then SKIP=1; echo "시험 실행이라 알림은 안 보내요"; fi
           if [ -n "$KEY" ] && grep -qx "$D $KEY" docs/alerts_sent.txt 2>/dev/null; then
             SKIP=1; echo "오늘 '$KEY' 알림은 먼저 시작한 실행이 이미 보냈어요 → 이번엔 화면만 새로 만들어요"
           fi
@@ -90,6 +96,7 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           CLOSE_MARKET: ${{ steps.plan.outputs.market }}
           SKIP_ALERT: ${{ steps.plan.outputs.skip }}
+          ONLY_MARKETS: ${{ steps.plan.outputs.market }}   # 장 마감 알림이면 그 나라만 새로 계산 (빠르게)
         run: python etf_bot.py
 
       - name: 알림 보낸 기록 남기기 (같은 알림을 두 번 보내지 않게)
