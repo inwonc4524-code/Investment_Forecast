@@ -134,11 +134,11 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
     pick = list(dict.fromkeys(pick))
 
     def one(t):
-        time.sleep(0.05)
+        time.sleep(0.15)
         return t, source(t, mkt_of.get(t))
 
     t0 = time.time()
-    with ThreadPoolExecutor(max_workers=8) as ex:   # 여러 곳을 동시에 확인 (빠르게)
+    with ThreadPoolExecutor(max_workers=4) as ex:   # 동시에 4곳까지만 (네이버가 막지 않게)
         got = dict(ex.map(one, pick))
     took = time.time() - t0
 
