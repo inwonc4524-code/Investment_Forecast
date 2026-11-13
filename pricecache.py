@@ -159,3 +159,54 @@ def download(tickers, batch=120, pause=2, recent="1mo", fresh=None, _nofull=Fals
           f" (이어 붙임 {MODE['inc']} · 전체로 받음 {MODE['full'] + MODE['fallback']})"
           + ("" if full else f" · 마지막 전체 받기 {age}일 전"))
     return Raw({t: data[t] for t in tickers if t in data})
+
+
+# ── 액면분할·자료 오류로 하루 만에 가격이 몇 배씩 튀는 것 바로잡기 ──
+# 야후가 일본 ETF 등에서 분할(예: 1주→200주)을 옛날 가격에 반영하지 않거나,
+# 분할 전후 하루 이틀만 엉뚱한 값을 줄 때가 있어요. 그러면 '제일 비쌀 때보다 −99%' 같은 숫자가 나와요.
+SPLIT_FACTORS = [1, 2, 3, 4, 5, 8, 10, 20, 25, 50, 100, 200, 500, 1000]
+
+
+def _nice(r, tol=0.06):
+    """비율 r 이 분할 비율(1, 1/2, 1/10 …, 2, 10 …)에 가까우면 그 비율, 아니면 None"""
+    for f in SPLIT_FACTORS:
+        for v in (f, 1 / f):
+            if abs(r / v - 1) <= tol:
+                return v
+    return None
+
+
+def fix_jumps(s, limit=3.0, name=""):
+    """하루 사이 limit 배 넘게 오르거나 1/limit 아래로 떨어진 곳을 찾아,
+    앞뒤 가격 비율이 분할 비율과 맞으면 옛날 가격을 그 비율로 맞추고 이상한 날은 지워요.
+    분할 비율과 안 맞으면(진짜 폭등·폭락일 수도 있어서) 건드리지 않아요."""
+    s = s.dropna()
+    s = s[s > 0]
+    if len(s) < 3:
+        return s
+    r = s / s.shift(1)
+    bad = [i for i in range(1, len(s)) if r.iloc[i] > limit or r.iloc[i] < 1 / limit]
+    if not bad:
+        return s
+    groups, cur = [], [bad[0]]
+    for i in bad[1:]:
+        if i - cur[-1] <= 3:      # 사흘 안에 이어진 튐은 한 덩어리
+            cur.append(i)
+        else:
+            groups.append(cur)
+            cur = [i]
+    groups.append(cur)
+    vals = s.copy()
+    drop = []
+    for g in reversed(groups):    # 최근 것부터 고쳐야 옛날 쪽 배율이 겹쳐도 맞아요
+        a, b = g[0], g[-1]
+        pre, post = vals.iloc[a - 1], vals.iloc[b]
+        f = _nice(post / pre)
+        if f is None:
+            print(f"  {name} {s.index[a].date()} 가격 급변 {post / pre:.3f}배 — 분할 비율이 아니라 그대로 둠")
+            continue
+        if f != 1:
+            vals.iloc[:a] = vals.iloc[:a] * f
+        drop += list(s.index[a:b])          # 덩어리 안쪽의 엉뚱한 날 (마지막 날은 정상 가격)
+        print(f"  {name} {s.index[a].date()}~{s.index[b].date()} 가격 튐 바로잡음 (옛날 가격 ×{f:g})")
+    return vals.drop(index=drop)

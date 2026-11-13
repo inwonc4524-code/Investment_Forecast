@@ -472,6 +472,12 @@ def fetch_prices(tickers, fresh=None):
                 pass
     if pricecache.MODE["mode"] == "full":   # 최근 1달만 이어 붙였을 때는 이미 최신이라 필요 없음
         top_up_recent(closes, tickers)
+    # 액면분할·자료 오류로 하루 만에 몇 배씩 튄 가격 바로잡기 (pricecache.fix_jumps 설명 참고)
+    for t in list(closes):
+        try:
+            closes[t] = pricecache.fix_jumps(closes[t], 1.6, t)
+        except Exception as e:
+            print(t, "가격 튐 점검 실패:", e)
     missing = [t for t in tickers if t not in closes]
     if missing:
         print("가격을 못 받은 종목:", ", ".join(missing))
