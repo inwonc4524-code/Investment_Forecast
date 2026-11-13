@@ -198,6 +198,14 @@ def _pick(raw, key, name):
         CHECK["spikes"][n0:] = [f"{name}"]
     if len(real):
         RAW[name] = real
+    # 야후가 '배당 포함 수정종가'를 최근 일부만 줄 때가 있어(예: IWF), 그 앞은 실제 가격을 비율로 이어 붙임
+    if len(adj) and len(real) and real.index[0] < adj.index[0]:
+        d0 = adj.index[0]
+        if d0 in real.index and real[d0] > 0:
+            head = real[real.index < d0] * (adj[d0] / real[d0])
+            if len(head) > 20:
+                print(f"  {name} 수정종가가 {d0.date()}부터만 있어 그 앞은 실제 가격으로 이어 붙임")
+                adj = pd.concat([head, adj])
     return adj
 
 
