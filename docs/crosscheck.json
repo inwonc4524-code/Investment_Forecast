@@ -1,7 +1,17 @@
 {
- "source_ok": 11,
- "source_none": 0,
+ "source_ok": 335,
+ "source_none": 2,
  "fixed_last": [],
- "excluded": [],
- "no_source_markets": []
+ "excluded": [
+  "TIGER MSCI Korea TR (1일,1주,1달,1년)",
+  "TIGER 배당커버드콜액티브 (1년)",
+  "iShares Russell 1000 Growth (1년)",
+  "CPIC CSI All Share Semicon & Eqpt Idx ETF (1년)"
+ ],
+ "no_source_markets": [
+  "CA",
+  "DE",
+  "GB",
+  "SG"
+ ]
 }
