@@ -164,7 +164,8 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
         #    (주의: 네이버 한국 일별 가격은 장 마감 뒤 넥스트레이드 애프터마켓(~20시)까지 합친 '통합' 값이라
         #     거래소 정규장 종가(15:30)와 몇백~몇천 원 다를 수 있어요. 그래서 작은 차이는 고치지 않아요 — 2026-11-13 확인)
         sv, yv = float(src.loc[last]), float(y.iloc[-1])
-        if sv > 0 and abs(yv / sv - 1) > 0.02:
+        # 한국은 정규장 종가(15:30)를 쓰기로 해서(2026-11-13 사용자 결정), 통합 가격인 네이버 값으로 바꾸지 않아요
+        if mkt_of.get(t) != "KR" and sv > 0 and abs(yv / sv - 1) > 0.02:
             ratio = sv / yv
             raw[t] = pd.concat([y.iloc[:-1], pd.Series([sv], index=[last])])
             c = closes[t]
