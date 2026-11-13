@@ -17,6 +17,7 @@ import pandas as pd
 PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".pricecache", "prices.pkl.gz")
 FULL_EVERY_DAYS = 7
 COLS = ["Close", "Adj Close"]
+KEPT = []   # 야후가 빼먹은 최신 날을 저장해 둔 가격으로 지킨 종목 수 (로그용)
 MODE = {"mode": "", "full": 0, "inc": 0, "fallback": 0}
 
 
@@ -92,7 +93,21 @@ def _splice(old, new):
         if not (pd.notna(a) and pd.notna(b) and a > 0 and b > 0):
             return None
         keep[c] = keep[c] * (a / b)
-    return pd.concat([keep, new[new.index >= d0]])
+    out = pd.concat([keep, new[new.index >= d0]])
+    # 야후가 밤사이 마지막 하루(특히 중국·홍콩·싱가포르 ETF)를 잠깐 빼고 줄 때가 있어요.
+    # 저장해 둔 가격에 그보다 최신 날(장 마감 알림 때 받은 확정 가격)이 있으면 버리지 않고 이어 붙여요.
+    last = new.index[-1]
+    tail = old[old.index > last].dropna(subset=["Close"]).tail(3)
+    if len(tail) and last in old.index:
+        tail = tail.copy()
+        for c in COLS:
+            if c in tail and c in new and c in old:
+                a, b = new.at[last, c], old.at[last, c]
+                if pd.notna(a) and pd.notna(b) and a > 0 and b > 0:
+                    tail[c] = tail[c] * (a / b)
+        out = pd.concat([out, tail])
+        KEPT.append(len(tail))
+    return out
 
 
 def save_state(name, obj):
@@ -119,6 +134,7 @@ def download(tickers, batch=120, pause=2, recent="1mo", fresh=None, _nofull=Fals
     tickers = list(dict.fromkeys(tickers))
     if not _nofull:
         MODE.update(mode="", full=0, inc=0, fallback=0)
+        KEPT.clear()
     data, full_at = _load()
     if fresh is not None and data:
         fresh = set(fresh)
@@ -157,7 +173,8 @@ def download(tickers, batch=120, pause=2, recent="1mo", fresh=None, _nofull=Fals
     _save(data, full_at)
     print(f"가격 받기: {'전체 새로' if full else '최근 1달만 이어 붙임'}"
           f" (이어 붙임 {MODE['inc']} · 전체로 받음 {MODE['full'] + MODE['fallback']})"
-          + ("" if full else f" · 마지막 전체 받기 {age}일 전"))
+          + ("" if full else f" · 마지막 전체 받기 {age}일 전")
+          + (f" · 야후가 빼먹은 최신 날을 저장해 둔 가격으로 지킨 곳 {len(KEPT)}" if KEPT else ""))
     return Raw({t: data[t] for t in tickers if t in data})
 
 
