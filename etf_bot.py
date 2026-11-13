@@ -346,6 +346,15 @@ def fetch_intraday(tickers, wait=None):
         grab(miss)
     if wait:      # 다른 사이트 비교(동시에 진행)가 끝나야 마감 가격을 믿고 쓸 수 있어서 기다림
         wait()
+    n_open = 0
+    for t, it in INTRA.items():   # 장 시작 가격도 거래소 공식 값(네이버)으로 맞춤
+        o = crosscheck.OPEN.get(t)
+        if o and pd.Timestamp(o[0]).normalize() == pd.Timestamp(it["date"]).normalize() \
+                and o[1] > 0 and abs(it["open"] / o[1] - 1) > 0.001:
+            it["open"] = o[1]
+            n_open += 1
+    if n_open:
+        print(f"장 시작 가격을 공식 값으로 맞춘 곳: {n_open}곳")
     align_slots()
     bad = []
     for t, it in INTRA.items():

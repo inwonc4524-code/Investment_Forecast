@@ -28,6 +28,7 @@ WORLD = {"US", "JP", "HK", "CN", "VN"}   # 네이버 해외주식으로 비교�
 FAILS = {}   # 사이트별 연속 실패 수 (계속 실패하면 이번 실행에선 그만 물어봄)
 ROTATE = 150                 # 해외는 한 번에 이만큼씩 돌아가며 비교 (+ 크게 움직인 곳은 항상)
 BAD = {}                     # 티커 → 순위에서 뺄 기간 {"1d","1w","1m",1}
+OPEN = {}                    # 티커 → (날짜, 거래소 공식 시작 가격) — 1일 '장 시작→마감' 계산용
 REPORT = {"source_ok": 0, "source_none": 0, "fixed_last": [], "excluded": [], "no_source_markets": []}
 
 
@@ -41,6 +42,9 @@ def naver_series(code):
     txt = requests.get(url, headers=UA, timeout=15).text.strip()
     rows = ast.literal_eval(txt.replace("\n", ""))
     data = [(pd.Timestamp(str(r[0])), float(r[4])) for r in rows[1:] if r and r[4]]
+    last = [r for r in rows[1:] if r and r[4]]
+    if last and last[-1][1]:
+        OPEN[code] = (pd.Timestamp(str(last[-1][0])), float(last[-1][1]))
     return pd.Series(dict(data)).sort_index() if data else None
 
 
@@ -71,6 +75,9 @@ def naver_world_series(ticker, mk):
             s = pd.Series({pd.Timestamp(str(x["localDate"])): float(x["closePrice"]) for x in data
                            if x.get("closePrice")}).sort_index()
             if len(s):
+                lastx = max((x for x in data if x.get("closePrice")), key=lambda x: str(x["localDate"]))
+                if lastx.get("openPrice"):
+                    OPEN[ticker] = (pd.Timestamp(str(lastx["localDate"])), float(lastx["openPrice"]))
                 return s
     return None
 
@@ -81,6 +88,8 @@ def source(ticker, mk):
         return None
     try:
         s = naver_series(ticker.split(".")[0]) if kind == "kr" else naver_world_series(ticker, mk)
+        if kind == "kr" and ticker.split(".")[0] in OPEN:
+            OPEN[ticker] = OPEN.pop(ticker.split(".")[0])
     except Exception:
         s = None
     FAILS[kind] = 0 if s is not None else FAILS.get(kind, 0) + 1
@@ -126,7 +135,7 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
         except Exception:
             rot = 0
     foreign = [t for t in tickers if mkt_of.get(t) in WORLD]
-    pick = [t for t in tickers if mkt_of.get(t) == "KR"]
+    pick = [t for t in tickers if mkt_of.get(t) in ("KR", "US")]   # 한국·미국은 매번 전부 (알림에 바로 쓰여서)
     pick += [t for t in foreign if big_move(t)]
     if foreign:
         start = rot % len(foreign)
