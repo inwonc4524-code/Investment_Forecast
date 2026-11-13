@@ -484,6 +484,8 @@ def fetch_prices(tickers, fresh=None):
     for t in list(closes):
         try:
             closes[t] = pricecache.fix_jumps(closes[t], 1.6, t)
+            if t in RAW:   # 실제 가격(다른 사이트와 비교할 때 씀)도 같은 방법으로
+                RAW[t] = pricecache.fix_jumps(RAW[t], 1.6, "")
         except Exception as e:
             print(t, "가격 튐 점검 실패:", e)
     missing = [t for t in tickers if t not in closes]
