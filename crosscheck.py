@@ -160,31 +160,18 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
         last = y.index[-1]
         if last not in src.index:
             continue   # 다른 사이트가 아직 그 날 가격이 없음 → 비교 안 함
-        # 1) 마지막 두 날 가격: 거래소 공식 마감 가격(네이버)과 0.1% 넘게 다르면 공식 값으로 맞춤
-        #    (야후는 마감 동시호가 전 가격이 남는 등 몇백~몇천 원씩 어긋날 때가 있어요)
-        for pos in (-2, -1):
-            if len(y) < -pos:
-                continue
-            d = y.index[pos]
-            if d not in src.index:
-                continue
-            sv, yv = float(src.loc[d]), float(y.iloc[pos])
-            if not (sv > 0 and yv > 0) or abs(yv / sv - 1) <= 0.001:
-                continue
-            y = y.copy()
-            y.iloc[pos] = sv
-            raw[t] = y
-            c = closes.get(t)
-            if c is not None and d in c.index:
-                c = c.copy()
-                c.loc[d] = float(c.loc[d]) * sv / yv
-                closes[t] = c
-            if abs(yv / sv - 1) > 0.02:
-                REPORT["fixed_last"].append(f"{names.get(t, t)} ({yv:,.2f}→{sv:,.2f})")
-            else:
-                REPORT["aligned"] = REPORT.get("aligned", 0) + 1
-                if len(REPORT.setdefault("aligned_ex", [])) < 8:
-                    REPORT["aligned_ex"].append(f"{names.get(t, t)} {pd.Timestamp(d):%m/%d} {yv:,.0f}→{sv:,.0f}")
+        # 1) 마지막 가격: 2% 넘게 다를 때만 고침
+        #    (주의: 네이버 한국 일별 가격은 장 마감 뒤 넥스트레이드 애프터마켓(~20시)까지 합친 '통합' 값이라
+        #     거래소 정규장 종가(15:30)와 몇백~몇천 원 다를 수 있어요. 그래서 작은 차이는 고치지 않아요 — 2026-11-13 확인)
+        sv, yv = float(src.loc[last]), float(y.iloc[-1])
+        if sv > 0 and abs(yv / sv - 1) > 0.02:
+            ratio = sv / yv
+            raw[t] = pd.concat([y.iloc[:-1], pd.Series([sv], index=[last])])
+            c = closes[t]
+            if c.index[-1] == last:
+                closes[t] = pd.concat([c.iloc[:-1], pd.Series([float(c.iloc[-1]) * ratio], index=[last])])
+            REPORT["fixed_last"].append(f"{names.get(t, t)} ({yv:,.2f}→{sv:,.2f})")
+            y = raw[t]
         # 2) 기간 수익률
         s2 = src[src.index <= last]
         bad = set()
@@ -207,8 +194,6 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
             pass
     print(f"다른 사이트와 비교: {REPORT['source_ok']}곳 비교 · 마지막 가격 고침 {len(REPORT['fixed_last'])}곳 · "
           f"순위에서 뺀 곳 {len(REPORT['excluded'])}곳 · 비교 자료 없음 {REPORT['source_none']}곳 · {took:.0f}초")
-    if REPORT.get("aligned"):
-        print(f"  공식 마감 가격으로 조금 맞춘 곳 {REPORT['aligned']}곳 (예: {', '.join(REPORT['aligned_ex'])})")
     return BAD
 
 
