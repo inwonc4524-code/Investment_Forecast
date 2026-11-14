@@ -8,6 +8,8 @@
 하는 일
   1. 마지막 마감 가격이 2% 넘게 다르면 → 다른 사이트 가격으로 고쳐요
   2. 1일·1주·1달·1년 수익률이 크게 다르면 → 그 기간 순위에서 이번엔 빼요
+  3. 야후가 이미 끝난 최신 장날을 빼먹으면 → 네이버 값으로 채워요 (최대 3일)
+  4. 한국 ETF인데 두 기간 넘게 크게 다르면 → 야후 가격이 망가진 것으로 보고 최근 1년 남짓을 네이버 값으로 바꿔요
 결과는 docs/crosscheck.json 에 남기고, 대시보드 맨 아래에 한 줄로 보여줘요.
 """
 
@@ -30,7 +32,23 @@ FAILS = {}   # 사이트별 연속 실패 수 (계속 실패하면 이번 실행
 ROTATE = 150                 # 해외는 한 번에 이만큼씩 돌아가며 비교 (+ 크게 움직인 곳은 항상)
 BAD = {}                     # 티커 → 순위에서 뺄 기간 {"1d","1w","1m",1}
 OPEN = {}                    # 티커 → (날짜, 거래소 공식 시작 가격) — 1일 '장 시작→마감' 계산용
-REPORT = {"source_ok": 0, "source_none": 0, "fixed_last": [], "excluded": [], "no_source_markets": []}
+REPORT = {"source_ok": 0, "source_none": 0, "fixed_last": [], "excluded": [], "no_source_markets": [],
+          "added_days": [], "replaced": []}
+MKT_TZ = {"US": "America/New_York", "JP": "Asia/Tokyo", "HK": "Asia/Hong_Kong", "CN": "Asia/Shanghai",
+          "VN": "Asia/Ho_Chi_Minh", "KR": "Asia/Seoul"}
+MAX_ADD_DAYS = 3             # 야후가 빼먹은 최신 날은 최대 이만큼만 네이버 값으로 채움
+
+
+def _with_tz(idx, like):
+    """새 날짜들을 야후 가격 표와 같은 시간대 모양으로"""
+    idx = pd.DatetimeIndex(idx)
+    tz = getattr(like.index, "tz", None)
+    return idx.tz_localize(tz) if tz is not None and idx.tz is None else idx
+
+
+def _naive(ts):
+    ts = pd.Timestamp(ts)
+    return ts.tz_localize(None) if ts.tzinfo is not None else ts
 
 
 # ───────── 다른 사이트에서 받아오기 ─────────
@@ -165,6 +183,8 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
             pass
         y = raw[t]
         last = y.index[-1]
+        src = src.copy()
+        src.index = _with_tz(src.index, y)
         if last not in src.index:
             continue   # 다른 사이트가 아직 그 날 가격이 없음 → 비교 안 함
         # 1) 마지막 가격: 2% 넘게 다를 때만 고침
@@ -180,6 +200,24 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
                 closes[t] = pd.concat([c.iloc[:-1], pd.Series([float(c.iloc[-1]) * ratio], index=[last])])
             REPORT["fixed_last"].append(f"{names.get(t, t)} ({yv:,.2f}→{sv:,.2f})")
             y = raw[t]
+        # 1-2) 야후가 빼먹은 최신 날(이미 장이 끝난 날)을 네이버 값으로 채움 (2026-11-14 1주일 돌아보기:
+        #      중국·홍콩·싱가포르 ETF가 금요일 값을 잃고 목요일에 멈춰 있었음). 한국은 ETF만 있는 봇이라
+        #      애프터마켓 차이가 없어서 같이 채워요. 마지막 날 값이 2% 안으로 같을 때만.
+        mk = mkt_of.get(t, "")
+        if mk in MKT_TZ:
+            today = pd.Timestamp.now(tz=MKT_TZ[mk]).tz_localize(None).normalize()
+            sv_last = float(src.loc[last])
+            newer = src[(src.index > last)]
+            newer = newer[[_naive(d).normalize() < today for d in newer.index]].iloc[:MAX_ADD_DAYS]
+            if len(newer) and sv_last > 0 and abs(float(y.iloc[-1]) / sv_last - 1) <= 0.02:
+                yv_last = float(y.iloc[-1])
+                raw[t] = pd.concat([y, newer * (yv_last / sv_last)])
+                c = closes.get(t)
+                if c is not None and len(c) and c.index[-1] == last:
+                    closes[t] = pd.concat([c, newer * (float(c.iloc[-1]) / sv_last)])
+                REPORT["added_days"].append(f"{names.get(t, t)} (+{', '.join(_naive(d).strftime('%m-%d') for d in newer.index)})")
+                y = raw[t]
+                last = y.index[-1]
         # 2) 기간 수익률
         s2 = src[src.index <= last]
         bad = set()
@@ -189,6 +227,18 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
                 continue
             if abs(a - b) > tol and abs(a - b) > 0.25 * max(abs(a), abs(b)):
                 bad.add(key)
+        # 3) 한국 ETF인데 두 기간 넘게 크게 다르면 야후 가격 자체가 망가진 것 → 최근 1년 남짓을 네이버 값으로 바꿈
+        #    (2026-11-14: TIGER MSCI Korea TR 야후 가격이 11/13 하루에 3.76배로 튐, 실제 37,260원).
+        #    ETF는 애프터마켓 거래가 없어 네이버 값 = 정규장 종가. 그 앞 옛날 야후 가격은 이어지는 날 비율로 맞춰요.
+        if mk == "KR" and len(bad) >= 2 and len(s2) >= 200:
+            first = s2.index[0]
+            old_part = y[y.index < first]
+            if len(old_part) and first in y.index and float(y.loc[first]) > 0:
+                old_part = old_part * (float(s2.loc[first]) / float(y.loc[first]))
+            raw[t] = pd.concat([old_part, s2])
+            closes[t] = raw[t].copy()
+            REPORT["replaced"].append(f"{names.get(t, t)} (야후 가격이 이상해서 최근 {len(s2)}일을 네이버 값으로)")
+            y, bad = raw[t], set()
         if bad:
             BAD[t] = bad
             per = ",".join({"1d": "1일", "1w": "1주", "1m": "1달", 1: "1년"}[k] for k in
@@ -202,6 +252,10 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
             pass
     print(f"다른 사이트와 비교: {REPORT['source_ok']}곳 비교 · 마지막 가격 고침 {len(REPORT['fixed_last'])}곳 · "
           f"순위에서 뺀 곳 {len(REPORT['excluded'])}곳 · 비교 자료 없음 {REPORT['source_none']}곳 · {took:.0f}초")
+    if REPORT["added_days"]:
+        print(f"야후가 빼먹은 최신 날을 네이버 값으로 채운 곳 {len(REPORT['added_days'])}:", ", ".join(REPORT["added_days"][:15]))
+    if REPORT["replaced"]:
+        print("야후 가격을 네이버 값으로 바꾼 곳:", ", ".join(REPORT["replaced"]))
     return BAD
 
 
