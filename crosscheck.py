@@ -156,6 +156,8 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
     foreign = [t for t in tickers if mkt_of.get(t) in WORLD]
     pick = [t for t in tickers if mkt_of.get(t) in ("KR", "US")]   # 한국·미국은 매번 전부 (알림에 바로 쓰여서)
     pick += [t for t in foreign if big_move(t)]
+    # 일본·홍콩·중국·베트남은 개수가 적어서 매번 전부 비교 (돌아가며 하면 빠진 최신 날을 못 채우는 곳이 생김 — 2026-11-14)
+    pick += [t for t in foreign if mkt_of.get(t) != "US"]
     if foreign:
         start = rot % len(foreign)
         pick += (foreign[start:] + foreign[:start])[:ROTATE]
