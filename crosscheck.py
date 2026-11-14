@@ -173,6 +173,7 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
     for t, src in got.items():
         if src is None or len(src) < 3:
             REPORT["source_none"] += 1
+            REPORT.setdefault("stale_why", []).append(f"{t}: 네이버 자료 없음")
             continue
         REPORT["source_ok"] += 1
         # 다른 사이트(네이버 해외)는 액면분할 전 가격을 그대로 둘 때가 있어(예: IWF 2026-04-29 1→4주),
@@ -186,6 +187,9 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
         src = src.copy()
         src.index = _with_tz(src.index, y)
         if last not in src.index:
+            if mkt_of.get(t) in ("CN", "HK", "JP"):
+                REPORT.setdefault("stale_why", []).append(
+                    f"{t}: 네이버에 야후 마지막 날({_naive(last):%m-%d}) 값이 없음 (네이버 마지막 {_naive(src.index[-1]):%m-%d})")
             continue   # 다른 사이트가 아직 그 날 가격이 없음 → 비교 안 함
         # 1) 마지막 가격: 2% 넘게 다를 때만 고침
         #    (주의: 네이버 한국 일별 가격은 장 마감 뒤 넥스트레이드 애프터마켓(~20시)까지 합친 '통합' 값이라
@@ -209,6 +213,14 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
             sv_last = float(src.loc[last])
             newer = src[(src.index > last)]
             newer = newer[[_naive(d).normalize() < today for d in newer.index]].iloc[:MAX_ADD_DAYS]
+            if len(src[src.index > last]) and not len(newer):
+                pass
+            elif not len(newer) and _naive(last).normalize() < today - pd.Timedelta(days=1) and mk in ("CN", "HK", "JP"):
+                REPORT.setdefault("stale_why", []).append(
+                    f"{t}: 야후 {_naive(last):%m-%d}, 네이버 마지막 {_naive(src.index[-1]):%m-%d}")
+            elif len(newer) and not (sv_last > 0 and abs(float(y.iloc[-1]) / sv_last - 1) <= 0.02):
+                REPORT.setdefault("stale_why", []).append(
+                    f"{t}: 마지막 겹치는 날 값 차이 {float(y.iloc[-1]) / sv_last - 1:+.1%}")
             if len(newer) and sv_last > 0 and abs(float(y.iloc[-1]) / sv_last - 1) <= 0.02:
                 yv_last = float(y.iloc[-1])
                 raw[t] = pd.concat([y, newer * (yv_last / sv_last)])
@@ -254,6 +266,8 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
           f"순위에서 뺀 곳 {len(REPORT['excluded'])}곳 · 비교 자료 없음 {REPORT['source_none']}곳 · {took:.0f}초")
     if REPORT["added_days"]:
         print(f"야후가 빼먹은 최신 날을 네이버 값으로 채운 곳 {len(REPORT['added_days'])}:", ", ".join(REPORT["added_days"][:15]))
+    if REPORT.get("stale_why"):
+        print("최신 날을 못 채운 곳(이유):", " / ".join(REPORT["stale_why"][:20]))
     if REPORT["replaced"]:
         print("야후 가격을 네이버 값으로 바꾼 곳:", ", ".join(REPORT["replaced"]))
     return BAD
