@@ -147,7 +147,10 @@ def naver_fill_missing(closes, tickers):
     """야후 자료가 아예 없는 ETF는 네이버 가격으로 넣어요 (네이버 자료가 있는 나라만, 2026-11-14 사용자 요청).
     네이버는 최근 400일만 줘서 1년 넘는 기간 숫자는 비어 있을 수 있어요."""
     got = []
-    for t in [t for t in tickers if t not in closes or not len(closes[t])]:
+    old_cut = pd.Timestamp.now().normalize() - pd.Timedelta(days=14)
+    # 야후 자료가 없거나, 있어도 2주 넘게 멈춘 것(예: TIGER 200TR 310960 은 야후에 2019년까지만 있었음)
+    todo = [t for t in tickers if t not in closes or not len(closes[t]) or _day(closes[t].index[-1]) < old_cut]
+    for t in todo:
         mk = MKT_OF.get(t, "")
         try:
             src = crosscheck.source(t, mk)
