@@ -3,6 +3,8 @@ ETF 목록(etfs.csv) 자동 업데이트 — 한 달에 한 번 GitHub Actions�
 
 기준
   🇰🇷 한국: 한국에 상장된 ETF 중 시가총액 상위 100개        ← 네이버 증권
+           + 주식형(국내 시장지수·국내 업종·테마·해외 주식) ETF는 시가총액 상위 200개까지
+             (2026-11-14 사용자 요청: 반도체 소부장·우주항공 같은 테마 ETF가 크게 올라도 목록에 없어서 넓힘)
   🇺🇸 미국: 미국 주요 ETF 후보 중 운용자산(모인 돈) 상위 100개 ← 야후 파이낸스
   공통: 레버리지·인버스(하루 움직임을 2배·거꾸로 따라가는 상품)와 파킹형(CD금리·머니마켓)은 뺌
   🇨🇳 중국·🇭🇰 홍콩: 자동 순위 자료가 없어서 지금 목록 그대로
@@ -21,6 +23,8 @@ import requests
 HERE = os.path.dirname(os.path.abspath(__file__))
 CSV = os.path.join(HERE, "etfs.csv")
 KR_TOP = 100
+KR_EQUITY_TOP = 200          # 주식형 ETF는 더 넓게
+KR_EQUITY_TABS = {1, 2, 4}   # 국내 시장지수 · 국내 업종·테마 · 해외 주식
 US_TOP = 100
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     "(KHTML, like Gecko) Chrome/130.0 Safari/537.36"}
@@ -50,7 +54,7 @@ THEME_WORDS = [
     (r"원자력|전력|Uranium|Nuclear|Utilities|Utility|Grid|인프라", "power"),
     (r"로봇|Robot|Robotics|\bAI\b|인공지능", "robot"),
     (r"바이오|헬스케어|Bio|Health|제약|Pharma", "bio"),
-    (r"방산|조선|Defense|Aerospace", "defense"),
+    (r"방산|조선|우주|Defense|Aerospace|Space", "defense"),
     (r"배당|Dividend|고배당|Income|커버드콜|Covered", "div"),
     (r"골드|금현물|금선물|KRX금|Gold|Silver|실버|원유|WTI|\bOil\b|Commodit|원자재", "gold"),
     (r"채권|국채|국고채|회사채|TDF|TRF|Treasury|Bond|Aggregate|TIPS|Muni|Corporate", "bond"),
@@ -129,10 +133,16 @@ def kr_top(limit=None):
         if not re.fullmatch(r"[0-9A-Z]{6}", code) or tab == 3 or SKIP.search(name):
             continue
         out.append({"ticker": code + ".KS", "name": name, "cap": num(it.get("marketSum")),
-                    "category": KR_TAB.get(tab, "국내 ETF")})
+                    "category": KR_TAB.get(tab, "국내 ETF"), "tab": tab})
     out = [x for x in out if x["cap"] == x["cap"]]
     out.sort(key=lambda x: x["cap"], reverse=True)
     return out if limit == 0 else out[:KR_TOP]
+
+
+def kr_equity_top():
+    """주식형 ETF(국내 시장지수·업종·테마·해외 주식) 시가총액 상위 KR_EQUITY_TOP개 (순위 = 주식형 안에서)"""
+    eq = [x for x in kr_top(limit=0) if x["tab"] in KR_EQUITY_TABS]
+    return eq[:KR_EQUITY_TOP]
 
 
 def kr_foreign():
@@ -176,6 +186,16 @@ def main():
             added.append(f"🇰🇷 {x['name']}")
     except Exception as e:
         print("한국 ETF 순위 업데이트 실패:", e)
+    try:
+        for i, x in enumerate(kr_equity_top(), 1):
+            if x["ticker"] in have:
+                continue
+            rows.append({"ticker": x["ticker"], "name": x["name"], "market": "KR",
+                         "category": f"{x['category']} (주식형 시총 {i}위)", "theme": themes_for(x["name"])})
+            have.add(x["ticker"])
+            added.append(f"🇰🇷 {x['name']} (주식형 {i}위)")
+    except Exception as e:
+        print("한국 주식형 ETF 순위 업데이트 실패:", e)
     try:
         for x in kr_foreign():
             if x["ticker"] in have:
