@@ -20,6 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pandas as pd
+import pricecache
 import requests
 
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -156,6 +157,12 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
             REPORT["source_none"] += 1
             continue
         REPORT["source_ok"] += 1
+        # 다른 사이트(네이버 해외)는 액면분할 전 가격을 그대로 둘 때가 있어(예: IWF 2026-04-29 1→4주),
+        # 비교 전에 야후 쪽과 같은 방법(pricecache.fix_jumps)으로 분할 튐을 맞춰요 (2026-11-14 검증)
+        try:
+            src = pricecache.fix_jumps(src, 1.6, f"(비교용 네이버) {t}")
+        except Exception:
+            pass
         y = raw[t]
         last = y.index[-1]
         if last not in src.index:
