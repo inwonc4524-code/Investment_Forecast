@@ -294,6 +294,10 @@ def note_html(esc=lambda x: x):
         t += " · 숫자가 서로 달라 이번엔 순위에서 뺀 곳: " + ", ".join(esc(x) for x in REPORT["excluded"][:10])
         if len(REPORT["excluded"]) > 10:
             t += f" 외 {len(REPORT['excluded']) - 10}곳"
+    if REPORT.get("stale_excluded"):
+        t += (" · 최신 장날 가격을 확인할 수 없어 이번엔 뺀 곳: "
+              + ", ".join(esc(x) for x in REPORT["stale_excluded"][:10])
+              + (f" 외 {len(REPORT['stale_excluded']) - 10}곳" if len(REPORT["stale_excluded"]) > 10 else ""))
     if REPORT["no_source_markets"]:
         t += f" · 비교할 사이트가 없는 나라({', '.join(REPORT['no_source_markets'])})는 야후 자료 안에서만 점검했어요"
     return t + "<br>"

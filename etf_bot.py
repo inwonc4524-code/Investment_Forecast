@@ -133,6 +133,72 @@ def cross_all(closes, universe, only=None):
         print("다른 사이트와 비교 실패:", e)
 
 
+INDEX_OF = {"KR": "^KS11", "US": "^GSPC", "CN": "000001.SS", "HK": "^HSI", "JP": "^N225",
+            "SG": "^STI", "CA": "^GSPTSE", "DE": "^GDAXI", "GB": "^FTSE"}   # 나라별 '그날 장이 열렸나' 확인용 지수
+STALE = {}   # 티커 → 마지막 날짜 (그 나라 최신 장날보다 늦어서 이번엔 뺀 곳)
+
+
+def _day(x):
+    x = pd.Timestamp(x)
+    return (x.tz_localize(None) if x.tzinfo is not None else x).normalize()
+
+
+def naver_fill_missing(closes, tickers):
+    """야후 자료가 아예 없는 ETF는 네이버 가격으로 넣어요 (네이버 자료가 있는 나라만, 2026-11-14 사용자 요청).
+    네이버는 최근 400일만 줘서 1년 넘는 기간 숫자는 비어 있을 수 있어요."""
+    got = []
+    for t in [t for t in tickers if t not in closes or not len(closes[t])]:
+        mk = MKT_OF.get(t, "")
+        try:
+            src = crosscheck.source(t, mk)
+        except Exception:
+            src = None
+        if src is None or len(src) < 3:
+            continue
+        src = trim_open(src[src > 0], mk)
+        closes[t] = src
+        RAW[t] = src.copy()
+        got.append(t)
+    CHECK["naver_only"] = got
+    if got:
+        print(f"야후 자료가 없어 네이버 가격으로 넣은 곳 {len(got)}:", ", ".join(got))
+
+
+def find_stale(closes, tickers, names):
+    """그 나라의 최신 장날(지수 날짜 · 같은 나라 다른 ETF 날짜 중 가장 늦은 날)보다 마지막 날짜가 이른 ETF는
+    최신 가격을 어디서도 확인할 수 없는 것 → 이번엔 순위·추천에서 빼요 (2026-11-14 사용자 요청).
+    휴장일엔 지수에도 그날이 없어서 빠지지 않아요."""
+    STALE.clear()
+    ref = {}
+    try:
+        import yfinance as yf
+        raw = yf.download(list(INDEX_OF.values()), period="1mo", auto_adjust=False, progress=False,
+                          group_by="ticker", threads=True)
+        for m, it in INDEX_OF.items():
+            try:
+                c = raw[it]["Close"].dropna()
+                c = trim_open(c[c > 0], m)
+                if len(c):
+                    ref[m] = _day(c.index[-1])
+            except Exception:
+                pass
+    except Exception as e:
+        print("지수 날짜를 못 받았어요(같은 나라 ETF 날짜로만 비교):", e)
+    last = {t: _day(closes[t].index[-1]) for t in tickers if t in closes and len(closes[t])}
+    for t, d in last.items():
+        m = MKT_OF.get(t, "")
+        peers = [v for k, v in last.items() if MKT_OF.get(k) == m]
+        expect = max([x for x in (ref.get(m), max(peers) if peers else None) if x is not None])
+        if d < expect:
+            STALE[t] = d
+    if STALE:
+        print(f"최신 장날 가격을 확인할 수 없어 이번엔 뺀 곳 {len(STALE)}:",
+              ", ".join(f"{names.get(t, t)}({d:%m-%d})" for t, d in STALE.items()))
+    CHECK["stale_excluded"] = {t: f"{d:%Y-%m-%d}" for t, d in STALE.items()}
+    crosscheck.REPORT["stale_excluded"] = [f"{names.get(t, t)} ({d:%m/%d}까지)" for t, d in STALE.items()]
+    crosscheck.save(os.path.join(DOCS, "crosscheck.json"))
+
+
 def drop_bad_periods(df):
     cols = {"1d": "r1d", "1w": "r1w", "1m": "r1m", 1: "r12m"}
     for t, per in crosscheck.BAD.items():
@@ -707,7 +773,7 @@ def build_long(universe, closes):
         rows = []
         for _, u in universe.iterrows():
             s = clean.get(u.ticker)
-            if s is None or s.empty:
+            if s is None or s.empty or u.ticker in STALE:
                 continue
             if y in crosscheck.BAD.get(u.ticker, ()):   # 다른 사이트와 숫자가 달라 이번엔 뺌
                 continue
@@ -737,7 +803,7 @@ def build_table(universe, closes):
     rows = []
     for _, u in universe.iterrows():
         s = closes.get(u.ticker)
-        if s is None or len(s.dropna()) < MIN_DAYS:
+        if s is None or len(s.dropna()) < MIN_DAYS or u.ticker in STALE:
             continue
         rows.append({**u.to_dict(), **indicators(s)})
     if not rows:
@@ -1382,6 +1448,7 @@ def main():
         import pricecache
         tick("가격 받기")
         trim_all(closes)
+        naver_fill_missing(closes, tickers)
         # 빠르게: 네이버와 비교하는 일은 옆에서 동시에 하고, 그동안 야후에서 시간별 가격을 받음
         with ThreadPoolExecutor(max_workers=1) as ex:
             cross = ex.submit(cross_all, closes, universe, target)
@@ -1396,6 +1463,10 @@ def main():
                     crosscheck.BAD.setdefault(t, v)
         pricecache.save_state("intra", dict(INTRA))
         pricecache.save_state("bad", dict(crosscheck.BAD))
+        try:
+            find_stale(closes, tickers, dict(zip(universe.ticker, universe.name)))
+        except Exception as e:
+            print("최신 날짜 점검 실패:", e)
     df = build_table(universe, closes)
     df = apply_intraday(df)
     df = drop_bad_periods(df)
