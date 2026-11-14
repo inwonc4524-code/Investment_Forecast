@@ -3,7 +3,7 @@ ETF 목록(etfs.csv) 자동 업데이트 — 한 달에 한 번 GitHub Actions�
 
 기준
   🇰🇷 한국: 한국에 상장된 ETF 중 시가총액 상위 100개        ← 네이버 증권
-           + 주식형(국내 시장지수·국내 업종·테마·해외 주식) ETF는 시가총액 상위 200개까지
+           + 주식형(국내 시장지수·국내 업종·테마·해외 주식) ETF는 시가총액 상위 300개까지
              (2026-11-14 사용자 요청: 반도체 소부장·우주항공 같은 테마 ETF가 크게 올라도 목록에 없어서 넓힘)
   🇺🇸 미국: 미국 주요 ETF 후보 중 운용자산(모인 돈) 상위 100개 ← 야후 파이낸스
   공통: 레버리지·인버스(하루 움직임을 2배·거꾸로 따라가는 상품)와 파킹형(CD금리·머니마켓)은 뺌
@@ -23,7 +23,7 @@ import requests
 HERE = os.path.dirname(os.path.abspath(__file__))
 CSV = os.path.join(HERE, "etfs.csv")
 KR_TOP = 100
-KR_EQUITY_TOP = 200          # 주식형 ETF는 더 넓게
+KR_EQUITY_TOP = 300          # 주식형 ETF는 더 넓게
 KR_EQUITY_TABS = {1, 2, 4}   # 국내 시장지수 · 국내 업종·테마 · 해외 주식
 US_TOP = 100
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
