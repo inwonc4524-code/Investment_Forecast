@@ -1,5 +1,5 @@
 {
- "source_ok": 540,
+ "source_ok": 551,
  "source_none": 2,
  "fixed_last": [],
  "excluded": [
@@ -14,6 +14,17 @@
   "SG"
  ],
  "added_days": [
+  "ChinaAMC CSI New Energy Vehicles Index ETF (+11-13)",
+  "GF CNI NEV Battery Index ETF (+11-13)",
+  "ChinaAMC CSI Robot Index ETF (+11-13)",
+  "E Fund CSI Artificial Intelligence Index ETF (+11-13)",
+  "Guotai CSI National Defense ETF (+11-13)",
+  "E Fund CSI 300 Pharmaceutical Index ETF (+11-13)",
+  "Penghua CSI Alcoholic Drink Index ETF (+11-13)",
+  "China Universal CSI Consumption Index ETF (+11-13)",
+  "iShares Hang Seng TECH ETF (+11-13)",
+  "iShares Core MSCI China ETF (+11-13)",
+  "iShares Core SENSEX India ETF (+11-13)",
   "Huatai-PB CSI 300 ETF (+11-13)",
   "ChinaAMC China 50 ETF (+11-13)",
   "China Southern CSI 500 Index ETF (+11-13)",
@@ -35,5 +46,9 @@
  ],
  "replaced": [
   "TIGER MSCI Korea TR (야후 가격이 이상해서 최근 269일을 네이버 값으로)"
+ ],
+ "stale_why": [
+  "518880.SS: 네이버 자료 없음",
+  "513100.SS: 네이버 자료 없음"
  ]
 }
