@@ -921,6 +921,11 @@ def reason_for(ticker, years, end=None):
     if years == "1d":   # 1일 이유는 그 날짜 것만 (예전 날 이유가 남아 있으면 안 보여줌)
         if end is None or r.get("1d_date") != pd.Timestamp(end).strftime("%Y-%m-%d"):
             return ""
+    if years in ("1w", "1m") and end is not None and r.get(f"{years}_date"):
+        # 1주·1달 이유도 쓴 날(그 기간의 마지막 날)이 있으면, 기간이 지나 낡은 이유는 안 보여줌 (2026-11-15)
+        age = (pd.Timestamp(end) - pd.Timestamp(r[f"{years}_date"])).days
+        if age > (6 if years == "1w" else 30):
+            return ""
     key = years if years in ("1d", "1w", "1m") else "1" if years == 1 else "long"
     return r.get(key, "")
 
