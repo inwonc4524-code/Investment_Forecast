@@ -708,7 +708,10 @@ def score(df):
     # 오늘의 추천: 쑥쑥 60% + 안정 40%, 너무 빨리 오른 것(RSI 75↑)은 감점
     df["total"] = (0.6 * df.mom_score + 0.4 * df.stab_score).round(1)
     df.loc[df.rsi14 >= 75, "total"] -= 10
-    df["overheated"] = df.rsi14 >= 70
+    # 채권처럼 거의 안 흔들리고 매일 조금씩만 오르는 ETF는 RSI가 90 넘게 나와요(내리는 날이 거의 없어서).
+    # 이건 '너무 빨리 오름'이 아니라서 🔥 표시는 출렁임(vol60)이 3% 넘는 ETF에만 붙여요 (2026-11-15).
+    # 감점은 그대로 둬요 — 빼면 현금 같은 채권 ETF가 한국 1등이 돼 버려요.
+    df["overheated"] = (df.rsi14 >= 70) & (df.vol60 >= 0.03)
     return df
 
 

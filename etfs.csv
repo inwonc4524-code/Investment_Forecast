@@ -70,7 +70,6 @@ IEF,iShares 7-10 Year Treasury Bond ETF,US,미국 중기채,bond
 411060.KS,ACE KRX금현물,KR,금,gold
 304660.KS,KODEX 미국30년국채울트라선물(H),KR,미국 장기채(원화),bond
 305080.KS,TIGER 미국채10년선물,KR,미국 중기채(원화),bond
-153130.KS,KODEX 단기채권,KR,국내 단기채,bond
 241180.KS,TIGER 일본니케이225,KR,일본(원화),world
 453810.KS,KODEX 인도Nifty50,KR,인도(원화),world
 VOO,Vanguard S&P 500 ETF,US,미국 대형주,sp500
@@ -201,7 +200,6 @@ KWEB,KraneShares CSI China Internet ETF,US,중국 인터넷,tech|world
 315930.KS,KODEX Top5PlusTR,KR,국내 업종·테마 (시총 96위),
 457480.KS,ACE 테슬라밸류체인액티브,KR,해외 주식 (시총 97위),
 489250.KS,KODEX 미국배당다우존스,KR,해외 주식 (시총 98위),div
-0061Z0.KS,RISE 단기특수은행채액티브,KR,채권 (시총 99위),bond
 441800.KS,TIME Korea플러스배당액티브,KR,국내 시장지수 (시총 100위),div
 IVV,iShares Core S&P 500 ETF,US,Large Blend,sp500
 VXUS,Vanguard Total International Stock ETF,US,Foreign Large Blend,world
