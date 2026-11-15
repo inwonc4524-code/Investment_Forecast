@@ -1,5 +1,5 @@
 {
- "source_ok": 551,
+ "source_ok": 549,
  "source_none": 2,
  "fixed_last": [],
  "excluded": [
@@ -14,9 +14,7 @@
   "SG"
  ],
  "added_days": [],
- "replaced": [
-  "TIGER MSCI Korea TR (야후 가격이 이상해서 최근 268일을 네이버 값으로)"
- ],
+ "replaced": [],
  "stale_why": [
   "510300.SS: 야후 11-13, 네이버 마지막 11-13",
   "510050.SS: 야후 11-13, 네이버 마지막 11-13",
