@@ -190,7 +190,7 @@ KWEB,KraneShares CSI China Internet ETF,US,중국 인터넷,tech|world
 295040.KS,SOL 200TR,KR,국내 시장지수 (시총 84위),
 476550.KS,TIGER 미국30년국채커버드콜액티브(H),KR,채권 (시총 85위),div|bond
 0025N0.KS,TIGER TDF2045 적격,KR,기타 (시총 87위),bond
-0117L0.KS,KODEX 26-12 금융채(AA-이상)액티브,KR,채권 (시총 88위),
+0117L0.KS,KODEX 26-12 금융채(AA-이상)액티브,KR,채권 (시총 88위),bond
 481060.KS,KODEX 미국30년국채타겟커버드콜(합성 H),KR,채권 (시총 89위),div|bond
 237350.KS,KODEX 코스피100,KR,국내 시장지수 (시총 90위),
 469150.KS,ACE AI반도체TOP3+,KR,국내 업종·테마 (시총 91위),semi
@@ -201,7 +201,7 @@ KWEB,KraneShares CSI China Internet ETF,US,중국 인터넷,tech|world
 315930.KS,KODEX Top5PlusTR,KR,국내 업종·테마 (시총 96위),
 457480.KS,ACE 테슬라밸류체인액티브,KR,해외 주식 (시총 97위),
 489250.KS,KODEX 미국배당다우존스,KR,해외 주식 (시총 98위),div
-0061Z0.KS,RISE 단기특수은행채액티브,KR,채권 (시총 99위),
+0061Z0.KS,RISE 단기특수은행채액티브,KR,채권 (시총 99위),bond
 441800.KS,TIME Korea플러스배당액티브,KR,국내 시장지수 (시총 100위),div
 IVV,iShares Core S&P 500 ETF,US,Large Blend,sp500
 VXUS,Vanguard Total International Stock ETF,US,Foreign Large Blend,world
@@ -217,7 +217,7 @@ IJH,iShares Core S&P Mid-Cap ETF,US,Mid-Cap Blend,
 IWF,iShares Russell 1000 Growth,US,Large Growth,
 QQQM,Invesco NASDAQ 100 ETF,US,Large Growth,tech
 IJR,iShares Core S&P Small-Cap ETF,US,Small Blend,
-VT,Vanguard Total World Stock ETF,US,Global Large-Stock Blend,
+VT,Vanguard Total World Stock ETF,US,Global Large-Stock Blend,world
 RSP,Invesco S&P 500 Equal Weight ETF,US,Large Blend,sp500
 ITOT,iShares Core S&P Total US Stock Market ETF,US,Large Blend,
 VEU,Vanguard FTSE All-World ex US ETF,US,Foreign Large Blend,world
@@ -258,7 +258,7 @@ MGK,Vanguard Morningstar Mega Cap Growth ETF,US,Large Growth,
 IUSG,iShares Core S&P US Growth ETF,US,Large Growth,
 AVUV,Avantis US Small Cap Value ETF,US,Small Value,
 VOT,Vanguard Morningstar Mid-Cap Growth ETF,US,Mid-Cap Growth,
-ACWI,iShares MSCI ACWI ETF,US,Global Large-Stock Blend,
+ACWI,iShares MSCI ACWI ETF,US,Global Large-Stock Blend,world
 EFV,iShares MSCI EAFE Value ETF,US,Foreign Large Value,world
 FNDX,Schwab Fundamental US Large Company ETF,US,Large Value,
 EEM,iShares MSCI Emerging Markets ETF,US,Diversified Emerging Mkts,world
@@ -268,7 +268,7 @@ USMV,iShares MSCI USA Min Vol Factor ETF,US,Large Blend,
 IGSB,iShares 1-5 Year Investment Grade Corporate Bd ETF,US,Short-Term Bond,bond
 364980.KS,TIGER 2차전지TOP10,KR,국내 업종·테마 (시총 93위),bat
 490590.KS,RISE 미국AI밸류체인데일리고정커버드콜,KR,해외 주식 (시총 94위),div
-144600.KS,KODEX 은선물(H),KR,원자재 (시총 96위),
+144600.KS,KODEX 은선물(H),KR,원자재 (시총 96위),gold
 484790.KS,KODEX 미국30년국채액티브(H),KR,채권 (시총 97위),bond
 0127P0.KS,ACE 미국대형성장주액티브,KR,해외 주식 (시총 98위),
 434060.KS,KODEX TDF2050액티브 적격,KR,기타 (시총 99위),bond
@@ -280,48 +280,48 @@ DFUS,DFA Dimensional US Equity Market ETF,US,Large Blend,
 396520.KS,TIGER 차이나반도체FACTSET,KR,중국 투자 (한국 상장),semi
 0043Y0.KS,TIME 차이나AI테크액티브,KR,중국 투자 (한국 상장),tech
 0053L0.KS,TIGER 차이나휴머노이드로봇,KR,중국 투자 (한국 상장),robot
-283580.KS,KODEX 차이나CSI300,KR,중국 투자 (한국 상장),
-414780.KS,TIGER 차이나과창판STAR50(합성),KR,중국 투자 (한국 상장),
+283580.KS,KODEX 차이나CSI300,KR,중국 투자 (한국 상장),world
+414780.KS,TIGER 차이나과창판STAR50(합성),KR,중국 투자 (한국 상장),world
 0047A0.KS,TIGER 차이나테크TOP10,KR,중국 투자 (한국 상장),tech
 0048K0.KS,KODEX 차이나휴머노이드로봇,KR,중국 투자 (한국 상장),robot
-192090.KS,TIGER 차이나CSI300,KR,중국 투자 (한국 상장),
+192090.KS,TIGER 차이나CSI300,KR,중국 투자 (한국 상장),world
 372330.KS,KODEX 차이나항셍테크,KR,홍콩 투자 (한국 상장),tech
 168580.KS,ACE 중국본토CSI300,KR,중국 투자 (한국 상장),world
 0162L0.KS,KODEX 차이나AI반도체TOP10,KR,중국 투자 (한국 상장),semi
 150460.KS,TIGER 중국소비테마,KR,중국 투자 (한국 상장),world
 371470.KS,TIGER 차이나바이오테크SOLACTIVE,KR,중국 투자 (한국 상장),tech|bio
-256750.KS,KODEX 차이나심천ChiNext(합성),KR,중국 투자 (한국 상장),
-099140.KS,KODEX 차이나H,KR,홍콩 투자 (한국 상장),
+256750.KS,KODEX 차이나심천ChiNext(합성),KR,중국 투자 (한국 상장),world
+099140.KS,KODEX 차이나H,KR,홍콩 투자 (한국 상장),world
 428510.KS,KODEX 차이나AI테크액티브,KR,중국 투자 (한국 상장),tech
 174360.KS,RISE 중국본토대형주CSI100,KR,중국 투자 (한국 상장),world
-245360.KS,TIGER 차이나HSCEI,KR,홍콩 투자 (한국 상장),
-415340.KS,KODEX 차이나과창판STAR50(합성),KR,중국 투자 (한국 상장),
+245360.KS,TIGER 차이나HSCEI,KR,홍콩 투자 (한국 상장),world
+415340.KS,KODEX 차이나과창판STAR50(합성),KR,중국 투자 (한국 상장),world
 419430.KS,KODEX 차이나2차전지MSCI(합성),KR,중국 투자 (한국 상장),bat
-0067V0.KS,TIGER 차이나글로벌리더스TOP3+,KR,중국 투자 (한국 상장),
+0067V0.KS,TIGER 차이나글로벌리더스TOP3+,KR,중국 투자 (한국 상장),world
 463300.KS,RISE 중국본토CSI300,KR,중국 투자 (한국 상장),world
 0164G0.KS,RISE 차이나AI반도체TOP4Plus,KR,중국 투자 (한국 상장),semi
-169950.KS,KODEX 차이나A50,KR,중국 투자 (한국 상장),
+169950.KS,KODEX 차이나A50,KR,중국 투자 (한국 상장),world
 0065G0.KS,KODEX 차이나테크TOP10,KR,중국 투자 (한국 상장),tech
-250730.KS,RISE 차이나HSCEI(H),KR,홍콩 투자 (한국 상장),
-474920.KS,에셋플러스 차이나일등기업포커스10액티브,KR,중국 투자 (한국 상장),
+250730.KS,RISE 차이나HSCEI(H),KR,홍콩 투자 (한국 상장),world
+474920.KS,에셋플러스 차이나일등기업포커스10액티브,KR,중국 투자 (한국 상장),world
 416090.KS,ACE 중국과창판STAR50,KR,중국 투자 (한국 상장),world
-415760.KS,SOL 차이나육성산업액티브(합성),KR,중국 투자 (한국 상장),
-396510.KS,TIGER 차이나클린에너지SOLACTIVE,KR,중국 투자 (한국 상장),
+415760.KS,SOL 차이나육성산업액티브(합성),KR,중국 투자 (한국 상장),world
+396510.KS,TIGER 차이나클린에너지SOLACTIVE,KR,중국 투자 (한국 상장),ess|world
 310080.KS,RISE 중국MSCI China(H),KR,중국 투자 (한국 상장),world
-117690.KS,TIGER 차이나항셍30,KR,홍콩 투자 (한국 상장),
+117690.KS,TIGER 차이나항셍30,KR,홍콩 투자 (한국 상장),world
 371870.KS,ACE 차이나항셍테크,KR,홍콩 투자 (한국 상장),tech
 0094L0.KS,RISE 차이나테크TOP10위클리타겟커버드콜,KR,중국 투자 (한국 상장),tech|div
-0133E0.KS,TIGER 차이나증권,KR,중국 투자 (한국 상장),
+0133E0.KS,TIGER 차이나증권,KR,중국 투자 (한국 상장),world
 0067Y0.KS,TIGER 차이나AI소프트웨어,KR,중국 투자 (한국 상장),tech
 371150.KS,RISE 차이나항셍테크,KR,홍콩 투자 (한국 상장),tech
 0047N0.KS,PLUS 차이나AI테크TOP10,KR,중국 투자 (한국 상장),tech
 256450.KS,PLUS 심천차이넥스트(합성),KR,중국 투자 (한국 상장),
-220130.KS,SOL 차이나강소기업CSI500(합성 H),KR,중국 투자 (한국 상장),
+220130.KS,SOL 차이나강소기업CSI500(합성 H),KR,중국 투자 (한국 상장),world
 413220.KS,SOL 차이나태양광CSI(합성),KR,중국 투자 (한국 상장),ess
 0087F0.KS,ACE 차이나AI빅테크TOP2+액티브,KR,중국 투자 (한국 상장),tech
 0154H0.KS,KoAct 차이나바이오헬스케어액티브,KR,중국 투자 (한국 상장),bio
 0128D0.KS,PLUS 차이나항셍테크위클리타겟커버드콜,KR,홍콩 투자 (한국 상장),tech|div
-0131A0.KS,SOL 차이나소비트렌드,KR,중국 투자 (한국 상장),
+0131A0.KS,SOL 차이나소비트렌드,KR,중국 투자 (한국 상장),world
 1321.T,Nomura NF Nikkei 225 ETF,JP,일본 대형주(닛케이225),
 1330.T,Amova Listed IDX Fund 225,JP,일본 대형주(닛케이225),
 1306.T,Nomura NF TOPIX ETF,JP,일본 전체시장(TOPIX),
@@ -391,8 +391,8 @@ SGLN.L,iShares 금 현물 (영국),GB,금,gold
 469160.KS,ACE 일본반도체,KR,일본 투자 (한국 상장),semi|world
 488290.KS,MIDAS 일본테크액티브,KR,일본 투자 (한국 상장),tech|world
 488480.KS,RISE 일본섹터TOP4Plus,KR,일본 투자 (한국 상장),world
-316300.KS,ACE 싱가포르리츠,KR,싱가포르 투자 (한국 상장),
-411860.KS,KIWOOM 독일DAX,KR,독일 투자 (한국 상장),
+316300.KS,ACE 싱가포르리츠,KR,싱가포르 투자 (한국 상장),world
+411860.KS,KIWOOM 독일DAX,KR,독일 투자 (한국 상장),world
 0177R0.KS,TIGER 반도체TOP10커버드콜액티브,KR,국내 업종·테마 (시총 89위),semi|div
 495850.KS,KODEX 코리아밸류업,KR,국내 시장지수 (시총 99위),
 491620.KS,RISE 미국테크100데일리고정커버드콜,KR,해외 주식 (주식형 시총 82위),tech|div
@@ -407,24 +407,24 @@ SGLN.L,iShares 금 현물 (영국),GB,금,gold
 0015B0.KS,KoAct 미국나스닥성장기업액티브,KR,해외 주식 (주식형 시총 92위),tech
 0105E0.KS,SOL 코리아고배당,KR,국내 업종·테마 (주식형 시총 93위),div
 138540.KS,TIGER 현대차그룹플러스,KR,국내 업종·테마 (주식형 시총 95위),
-251350.KS,KODEX MSCI선진국,KR,해외 주식 (주식형 시총 96위),
+251350.KS,KODEX MSCI선진국,KR,해외 주식 (주식형 시총 96위),world
 471990.KS,KODEX AI반도체핵심장비,KR,국내 업종·테마 (주식형 시총 97위),semi
 0101N0.KS,RISE AI전력인프라,KR,국내 업종·테마 (주식형 시총 99위),power
 367760.KS,RISE 네트워크인프라,KR,국내 업종·테마 (주식형 시총 100위),power
-466950.KS,TIGER 글로벌AI액티브,KR,해외 주식 (주식형 시총 101위),
+466950.KS,TIGER 글로벌AI액티브,KR,해외 주식 (주식형 시총 101위),robot
 491010.KS,TIGER 글로벌AI전력인프라액티브,KR,해외 주식 (주식형 시총 102위),power
 277630.KS,TIGER 코스피,KR,국내 시장지수 (주식형 시총 103위),
 0163Y0.KS,KoAct 코스닥액티브,KR,국내 시장지수 (주식형 시총 104위),
 483280.KS,KODEX 미국AI테크TOP10타겟커버드콜,KR,해외 주식 (주식형 시총 108위),tech|div
 315960.KS,RISE 대형고배당10TR,KR,국내 업종·테마 (주식형 시총 109위),div
-0060H0.KS,TIGER 토탈월드스탁액티브,KR,국내 시장지수 (주식형 시총 110위),
+0060H0.KS,TIGER 토탈월드스탁액티브,KR,국내 시장지수 (주식형 시총 110위),world
 448300.KS,TIGER 미국나스닥100(H),KR,해외 주식 (주식형 시총 111위),tech
 474220.KS,TIGER 미국테크TOP10타겟커버드콜,KR,해외 주식 (주식형 시총 112위),tech|div
 361580.KS,RISE 200TR,KR,국내 시장지수 (주식형 시총 114위),
 426020.KS,TIME 미국S&P500액티브,KR,해외 주식 (주식형 시총 115위),sp500
 496080.KS,TIGER 코리아밸류업,KR,국내 시장지수 (주식형 시총 116위),
 444200.KS,SOL 코리아메가테크액티브,KR,국내 업종·테마 (주식형 시총 117위),tech
-0190C0.KS,RISE 현대차고정피지컬AI,KR,국내 업종·테마 (주식형 시총 118위),
+0190C0.KS,RISE 현대차고정피지컬AI,KR,국내 업종·테마 (주식형 시총 118위),robot
 494670.KS,TIGER 조선TOP10,KR,국내 업종·테마 (주식형 시총 119위),defense
 451060.KS,1Q 200액티브,KR,국내 시장지수 (주식형 시총 120위),
 0026S0.KS,1Q 미국S&P500,KR,해외 주식 (주식형 시총 121위),sp500
@@ -434,11 +434,11 @@ SGLN.L,iShares 금 현물 (영국),GB,금,gold
 0008S0.KS,TIGER 미국배당다우존스타겟데일리커버드콜,KR,해외 주식 (주식형 시총 127위),div
 0144L0.KS,KODEX 미국성장커버드콜액티브,KR,해외 주식 (주식형 시총 128위),div
 0210A0.KS,ACE K반도체TOP2+,KR,국내 업종·테마 (주식형 시총 129위),semi
-0023A0.KS,SOL 미국양자컴퓨팅TOP10,KR,해외 주식 (주식형 시총 130위),
-0209D0.KS,KODEX 전고체배터리ESS TOP2플러스,KR,국내 업종·테마 (주식형 시총 131위),bat
+0023A0.KS,SOL 미국양자컴퓨팅TOP10,KR,해외 주식 (주식형 시총 130위),tech
+0209D0.KS,KODEX 전고체배터리ESS TOP2플러스,KR,국내 업종·테마 (주식형 시총 131위),bat|ess
 0131V0.KS,1Q 미국우주항공테크,KR,해외 주식 (주식형 시총 132위),tech|defense
 484880.KS,SOL 금융지주플러스고배당,KR,국내 업종·테마 (주식형 시총 133위),div
-0173Y0.KS,KODEX 미국AI광통신네트워크,KR,해외 주식 (주식형 시총 134위),
+0173Y0.KS,KODEX 미국AI광통신네트워크,KR,해외 주식 (주식형 시총 134위),tech|robot
 0052D0.KS,TIGER 코리아배당다우존스,KR,국내 업종·테마 (주식형 시총 135위),div
 469070.KS,RISE AI&로봇,KR,국내 업종·테마 (주식형 시총 137위),robot
 0167Z0.KS,KODEX 미국우주항공,KR,해외 주식 (주식형 시총 138위),defense
@@ -447,7 +447,7 @@ SGLN.L,iShares 금 현물 (영국),GB,금,gold
 453870.KS,TIGER 인도니프티50,KR,해외 주식 (주식형 시총 141위),world
 485540.KS,KODEX 미국AI테크TOP10,KR,해외 주식 (주식형 시총 142위),tech
 310960.KS,TIGER 200TR,KR,국내 시장지수 (주식형 시총 143위),
-385510.KS,KODEX 신재생에너지액티브,KR,국내 업종·테마 (주식형 시총 144위),
+385510.KS,KODEX 신재생에너지액티브,KR,국내 업종·테마 (주식형 시총 144위),ess
 489030.KS,PLUS 고배당주위클리커버드콜,KR,국내 업종·테마 (주식형 시총 145위),div
 474590.KS,WON 반도체밸류체인액티브,KR,국내 업종·테마 (주식형 시총 146위),semi
 302450.KS,RISE 코스피,KR,국내 시장지수 (주식형 시총 147위),
@@ -462,7 +462,7 @@ SGLN.L,iShares 금 현물 (영국),GB,금,gold
 452360.KS,SOL 미국배당다우존스(H),KR,해외 주식 (주식형 시총 158위),div
 0080G0.KS,KODEX 방산TOP10,KR,국내 업종·테마 (주식형 시총 159위),defense
 0089D0.KS,KODEX 금융고배당TOP10,KR,국내 업종·테마 (주식형 시총 161위),div
-483320.KS,ACE 엔비디아밸류체인액티브,KR,해외 주식 (주식형 시총 162위),
+483320.KS,ACE 엔비디아밸류체인액티브,KR,해외 주식 (주식형 시총 162위),tech
 471780.KS,TIGER 코리아테크액티브,KR,국내 업종·테마 (주식형 시총 163위),tech
 493810.KS,TIGER 미국AI빅테크10타겟데일리커버드콜,KR,해외 주식 (주식형 시총 164위),tech|div
 422420.KS,RISE 2차전지액티브,KR,국내 업종·테마 (주식형 시총 165위),bat
@@ -470,7 +470,7 @@ SGLN.L,iShares 금 현물 (영국),GB,금,gold
 463050.KS,TIME K바이오액티브,KR,국내 업종·테마 (주식형 시총 168위),bio
 423170.KS,SOL 글로벌AI반도체탑픽액티브,KR,해외 주식 (주식형 시총 169위),semi
 429000.KS,TIGER 미국S&P500배당귀족,KR,해외 주식 (주식형 시총 170위),sp500|div
-483340.KS,ACE 구글밸류체인액티브,KR,해외 주식 (주식형 시총 171위),
+483340.KS,ACE 구글밸류체인액티브,KR,해외 주식 (주식형 시총 171위),tech
 0069M0.KS,1Q 미국나스닥100,KR,해외 주식 (주식형 시총 172위),tech
 471760.KS,TIGER AI반도체핵심공정,KR,국내 업종·테마 (주식형 시총 173위),semi
 0005A0.KS,KODEX 미국S&P500데일리커버드콜OTM,KR,해외 주식 (주식형 시총 175위),sp500|div
@@ -488,23 +488,23 @@ SGLN.L,iShares 금 현물 (영국),GB,금,gold
 480020.KS,ACE 미국빅테크7+데일리타겟커버드콜(합성),KR,해외 주식 (주식형 시총 188위),tech|div
 388420.KS,RISE 비메모리반도체액티브,KR,국내 업종·테마 (주식형 시총 189위),semi
 486450.KS,SOL 미국AI전력인프라,KR,해외 주식 (주식형 시총 190위),power
-498270.KS,KIWOOM 미국양자컴퓨팅,KR,해외 주식 (주식형 시총 191위),
+498270.KS,KIWOOM 미국양자컴퓨팅,KR,해외 주식 (주식형 시총 191위),tech
 0098F0.KS,KODEX 원자력SMR,KR,국내 업종·테마 (주식형 시총 192위),power
 228790.KS,TIGER 화장품,KR,국내 업종·테마 (주식형 시총 193위),
 200250.KS,KIWOOM 인도Nifty50(합성),KR,해외 주식 (주식형 시총 194위),world
-363580.KS,KODEX 200IT TR,KR,국내 업종·테마 (주식형 시총 195위),
+363580.KS,KODEX 200IT TR,KR,국내 업종·테마 (주식형 시총 195위),tech
 0104N0.KS,TIGER 200타겟위클리커버드콜,KR,국내 업종·테마 (주식형 시총 196위),div
 442320.KS,RISE 글로벌원자력,KR,해외 주식 (주식형 시총 197위),power
 266160.KS,RISE 고배당,KR,국내 업종·테마 (주식형 시총 198위),div
 494330.KS,ACE 라이프자산주주가치액티브,KR,국내 업종·테마 (주식형 시총 199위),
-0204D0.KS,KODEX 현대차로보틱스밸류체인TOP3플러스,KR,국내 업종·테마 (주식형 시총 200위),
+0204D0.KS,KODEX 현대차로보틱스밸류체인TOP3플러스,KR,국내 업종·테마 (주식형 시총 200위),robot
 490600.KS,RISE 미국배당100데일리고정커버드콜,KR,해외 주식 (주식형 시총 201위),div
 0228G0.KS,ACE 반도체Plus전략산업,KR,국내 업종·테마 (주식형 시총 202위),semi
 0005D0.KS,SOL 전고체배터리&실리콘음극재,KR,국내 업종·테마 (주식형 시총 203위),bat
 0151S0.KS,KODEX 미국AI반도체TOP3플러스,KR,해외 주식 (주식형 시총 204위),semi
 461950.KS,KODEX 2차전지핵심소재10,KR,국내 업종·테마 (주식형 시총 205위),bat
 421320.KS,PLUS 우주항공,KR,국내 업종·테마 (주식형 시총 206위),defense
-139230.KS,TIGER 200 중공업,KR,국내 업종·테마 (주식형 시총 207위),
+139230.KS,TIGER 200 중공업,KR,국내 업종·테마 (주식형 시총 207위),defense
 475310.KS,SOL 반도체후공정,KR,국내 업종·테마 (주식형 시총 208위),semi
 480030.KS,ACE 미국500데일리타겟커버드콜(합성),KR,해외 주식 (주식형 시총 209위),div
 473460.KS,KODEX 미국서학개미,KR,해외 주식 (주식형 시총 210위),
@@ -529,7 +529,7 @@ SGLN.L,iShares 금 현물 (영국),GB,금,gold
 337160.KS,KODEX 200ESG,KR,국내 업종·테마 (주식형 시총 231위),
 354500.KS,ACE 코스닥150,KR,국내 시장지수 (주식형 시총 233위),
 394670.KS,TIGER 글로벌리튬&2차전지SOLACTIVE(합성),KR,해외 주식 (주식형 시총 234위),bat
-494220.KS,UNICORN SK하이닉스밸류체인액티브,KR,국내 업종·테마 (주식형 시총 235위),
+494220.KS,UNICORN SK하이닉스밸류체인액티브,KR,국내 업종·테마 (주식형 시총 235위),semi
 152870.KS,파워 200,KR,국내 시장지수 (주식형 시총 236위),
 139220.KS,TIGER 200 건설,KR,국내 업종·테마 (주식형 시총 237위),
 0051G0.KS,SOL 미국원자력SMR,KR,해외 주식 (주식형 시총 238위),power
@@ -560,7 +560,7 @@ SGLN.L,iShares 금 현물 (영국),GB,금,gold
 491820.KS,HANARO 전력설비투자,KR,국내 업종·테마 (주식형 시총 265위),power
 0123G0.KS,TIGER 미국AI전력SMR,KR,해외 주식 (주식형 시총 266위),power
 0151P0.KS,RISE 코리아전략산업액티브,KR,국내 업종·테마 (주식형 시총 267위),
-464310.KS,TIGER 글로벌AI&로보틱스 INDXX,KR,해외 주식 (주식형 시총 268위),
+464310.KS,TIGER 글로벌AI&로보틱스 INDXX,KR,해외 주식 (주식형 시총 268위),robot
 448100.KS,WON 200,KR,국내 시장지수 (주식형 시총 269위),
 476850.KS,KoAct 배당성장액티브,KR,국내 시장지수 (주식형 시총 271위),div
 0074K0.KS,KoAct K수출핵심기업TOP30액티브,KR,국내 업종·테마 (주식형 시총 273위),
@@ -570,22 +570,22 @@ SGLN.L,iShares 금 현물 (영국),GB,금,gold
 453080.KS,KIWOOM 미국나스닥100(H),KR,해외 주식 (주식형 시총 277위),tech
 269540.KS,PLUS 미국S&P500(H),KR,해외 주식 (주식형 시총 278위),sp500
 332940.KS,HANARO MSCI Korea TR,KR,국내 시장지수 (주식형 시총 279위),
-195980.KS,PLUS 신흥국MSCI(합성 H),KR,해외 주식 (주식형 시총 280위),
+195980.KS,PLUS 신흥국MSCI(합성 H),KR,해외 주식 (주식형 시총 280위),world
 0092B0.KS,SOL 한국원자력SMR,KR,국내 업종·테마 (주식형 시총 281위),power
-377990.KS,TIGER Fn신재생에너지,KR,국내 업종·테마 (주식형 시총 282위),
-418670.KS,TIGER 글로벌AI사이버보안,KR,해외 주식 (주식형 시총 283위),
+377990.KS,TIGER Fn신재생에너지,KR,국내 업종·테마 (주식형 시총 282위),ess
+418670.KS,TIGER 글로벌AI사이버보안,KR,해외 주식 (주식형 시총 283위),tech|robot
 394660.KS,TIGER 글로벌자율주행&전기차SOLACTIVE,KR,해외 주식 (주식형 시총 284위),bat
 453330.KS,RISE 미국S&P500(H),KR,해외 주식 (주식형 시총 285위),sp500
 0177X0.KS,ACE K휴머노이드로봇산업TOP2+,KR,국내 업종·테마 (주식형 시총 286위),robot
-326240.KS,RISE IT플러스,KR,국내 업종·테마 (주식형 시총 287위),
+326240.KS,RISE IT플러스,KR,국내 업종·테마 (주식형 시총 287위),tech
 496090.KS,KIWOOM 코리아밸류업,KR,국내 시장지수 (주식형 시총 288위),
 319640.KS,TIGER 골드선물(H),KR,해외 주식 (주식형 시총 289위),gold
 449770.KS,KIWOOM 미국S&P500,KR,해외 주식 (주식형 시총 290위),sp500
 211900.KS,KODEX 코리아배당성장,KR,국내 업종·테마 (주식형 시총 291위),div
 367770.KS,RISE 수소경제테마,KR,국내 업종·테마 (주식형 시총 292위),ess
-0255E0.KS,TIGER 글로벌MLCC&기판,KR,해외 주식 (주식형 시총 293위),
+0255E0.KS,TIGER 글로벌MLCC&기판,KR,해외 주식 (주식형 시총 293위),semi
 0181B0.KS,HANARO 미국AI메모리반도체TOP4+,KR,해외 주식 (주식형 시총 294위),semi
-266370.KS,KODEX IT,KR,국내 업종·테마 (주식형 시총 295위),
+266370.KS,KODEX IT,KR,국내 업종·테마 (주식형 시총 295위),tech
 0000J0.KS,PLUS 한화그룹주,KR,국내 업종·테마 (주식형 시총 296위),
 475350.KS,RISE 버크셔포트폴리오TOP10,KR,해외 주식 (주식형 시총 297위),
 325020.KS,KODEX 배당가치,KR,국내 업종·테마 (주식형 시총 298위),div

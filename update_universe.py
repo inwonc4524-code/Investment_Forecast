@@ -47,18 +47,18 @@ EWZ VGK IEUR DFAC DFUS AVDV SCHM SCHV SCHE OEF MDY IWV VXF ESGU DYNF SPTM SPEM S
 
 THEME_WORDS = [
     (r"S&P ?500|S&P500|SPDR S&P 500|Vanguard 500", "sp500"),
-    (r"반도체|Semiconductor|SOX", "semi"),
-    (r"나스닥|Nasdaq|테크|Tech|빅테크|소프트웨어|Software|Internet|인터넷", "tech"),
+    (r"반도체|Semiconductor|SOX|하이닉스|MLCC", "semi"),
+    (r"나스닥|Nasdaq|테크|Tech|빅테크|소프트웨어|Software|Internet|인터넷|(?<![A-Za-z])IT(?![A-Za-z])|양자|사이버보안|광통신|엔비디아|구글", "tech"),
     (r"2차전지|배터리|Battery|Lithium|리튬|전기차", "bat"),
-    (r"태양광|Solar|Clean|친환경|수소", "ess"),
+    (r"태양광|Solar|Clean|친환경|수소|전고체|(?<![A-Za-z])ESS(?![A-Za-z])|신재생|클린에너지", "ess"),
     (r"원자력|전력|Uranium|Nuclear|Utilities|Utility|Grid|인프라", "power"),
-    (r"로봇|Robot|Robotics|\bAI\b|인공지능", "robot"),
+    (r"로봇|로보틱스|Robot|Robotics|(?<![A-Za-z])AI(?![A-Za-z])|인공지능", "robot"),
     (r"바이오|헬스케어|Bio|Health|제약|Pharma", "bio"),
-    (r"방산|조선|우주|Defense|Aerospace|Space", "defense"),
+    (r"방산|조선|중공업|우주|Defense|Aerospace|Space", "defense"),
     (r"배당|Dividend|고배당|Income|커버드콜|Covered", "div"),
-    (r"골드|금현물|금선물|KRX금|Gold|Silver|실버|원유|WTI|\bOil\b|Commodit|원자재", "gold"),
-    (r"채권|국채|국고채|회사채|TDF|TRF|Treasury|Bond|Aggregate|TIPS|Muni|Corporate", "bond"),
-    (r"일본|인도|중국|베트남|대만|유럽|Japan|India|China|Taiwan|Europe|Emerging|Developed|International|ex-US|EAFE", "world"),
+    (r"골드|금현물|금선물|KRX금|Gold|Silver|실버|은선물|원유|WTI|\bOil\b|Commodit|원자재", "gold"),
+    (r"채권|국채|국고채|회사채|금융채|은행채|특수채|TDF|TRF|Treasury|Bond|Aggregate|TIPS|Muni|Corporate", "bond"),
+    (r"일본|인도|중국|차이나|홍콩|항셍|베트남|대만|유럽|독일|싱가포르|브라질|선진국|신흥국|토탈월드|Japan|India|China|Taiwan|Europe|Emerging|Developed|International|ex-US|EAFE|World|ACWI", "world"),
 ]
 
 
