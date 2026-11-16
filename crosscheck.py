@@ -31,6 +31,7 @@ WORLD = {"US", "JP", "HK", "CN", "VN"}   # 네이버 해외주식으로 비교�
 FAILS = {}   # 사이트별 연속 실패 수 (계속 실패하면 이번 실행에선 그만 물어봄)
 ROTATE = 150                 # 해외는 한 번에 이만큼씩 돌아가며 비교 (+ 크게 움직인 곳은 항상)
 BAD = {}                     # 티커 → 순위에서 뺄 기간 {"1d","1w","1m",1}
+REPLACED = {}                # 티커 → 네이버 값으로 바꾼 가격 (다음 '한 나라만' 실행에서 다시 쓰려고 저장, 2026-11-16)
 OPEN = {}                    # 티커 → (날짜, 거래소 공식 시작 가격) — 1일 '장 시작→마감' 계산용
 REPORT = {"source_ok": 0, "source_none": 0, "fixed_last": [], "excluded": [], "no_source_markets": [],
           "added_days": [], "replaced": []}
@@ -252,6 +253,7 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
             raw[t] = pd.concat([old_part, s2])
             closes[t] = raw[t].copy()
             REPORT["replaced"].append(f"{names.get(t, t)} (야후 가격이 이상해서 최근 {len(s2)}일을 네이버 값으로)")
+            REPLACED[t] = raw[t].copy()
             y, bad = raw[t], set()
         if bad:
             BAD[t] = bad

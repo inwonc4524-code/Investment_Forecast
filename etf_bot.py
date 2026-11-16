@@ -167,10 +167,12 @@ def naver_fill_missing(closes, tickers):
         print(f"야후 자료가 없어 네이버 가격으로 넣은 곳 {len(got)}:", ", ".join(got))
 
 
-def find_stale(closes, tickers, names):
+def find_stale(closes, tickers, names, only=None):
     """그 나라의 최신 장날(지수 날짜 · 같은 나라 다른 ETF 날짜 중 가장 늦은 날)보다 마지막 날짜가 이른 ETF는
     최신 가격을 어디서도 확인할 수 없는 것 → 이번엔 순위·추천에서 빼요 (2026-11-14 사용자 요청).
-    휴장일엔 지수에도 그날이 없어서 빠지지 않아요."""
+    휴장일엔 지수에도 그날이 없어서 빠지지 않아요.
+    장 마감 실행(ONLY_MARKETS)에서는 다른 나라 ETF를 새로 받지 않고 지난 가격을 그대로 쓰므로, 그 나라들은 지수 날짜와
+    비교하지 않고 같은 나라 ETF끼리만 비교해요 (2026-11-16: 한국 마감 실행에서 일본·중국·홍콩 ETF 45곳이 통째로 빠졌음)."""
     STALE.clear()
     ref = {}
     try:
@@ -191,7 +193,8 @@ def find_stale(closes, tickers, names):
     for t, d in last.items():
         m = MKT_OF.get(t, "")
         peers = [v for k, v in last.items() if MKT_OF.get(k) == m]
-        expect = max([x for x in (ref.get(m), max(peers) if peers else None) if x is not None])
+        idx = ref.get(m) if not only or m in only else None
+        expect = max([x for x in (idx, max(peers) if peers else None) if x is not None])
         if d < expect:
             STALE[t] = d
     if STALE:
@@ -1487,10 +1490,24 @@ def main():
             for t, v in (pricecache.load_state("bad", {}) or {}).items():
                 if MKT_OF.get(t) not in only:
                     crosscheck.BAD.setdefault(t, v)
+        # 야후 가격이 망가져 네이버 값으로 바꾼 한국 ETF(예: TIGER MSCI Korea TR·TIGER 200TR)는 그 바뀐 가격을 저장해 두고,
+        # 다른 나라만 새로 계산하는 장 마감 실행에서도 그대로 써요. 안 그러면 망가진 야후 가격(1년이 안 되는 짧은 자료)이
+        # 다시 쓰여서 순위에서 빠졌어요 (2026-11-16 중국·홍콩 마감 실행 뒤 2곳이 사라짐).
+        repl = {}
+        if only:
+            for t, s in (pricecache.load_state("naver_repl", {}) or {}).items():
+                if t in MKT_OF and MKT_OF.get(t) not in only and s is not None and len(s):
+                    closes[t] = s.copy()
+                    RAW[t] = s.copy()
+                    repl[t] = s
+            if repl:
+                print(f"지난번에 네이버 값으로 바꾼 가격을 다시 쓴 곳 {len(repl)}:", ", ".join(repl))
+        repl.update(crosscheck.REPLACED)
+        pricecache.save_state("naver_repl", repl)
         pricecache.save_state("intra", dict(INTRA))
         pricecache.save_state("bad", dict(crosscheck.BAD))
         try:
-            find_stale(closes, tickers, dict(zip(universe.ticker, universe.name)))
+            find_stale(closes, tickers, dict(zip(universe.ticker, universe.name)), only or None)
         except Exception as e:
             print("최신 날짜 점검 실패:", e)
     df = build_table(universe, closes)
@@ -1527,7 +1544,8 @@ def main():
     if url:   # 알림에서 열 때 예전에 저장된 화면 대신 항상 새 화면이 나오게
         url = f"{url}{'&' if '?' in url else '?'}v={build}"
     if os.environ.get("GITHUB_EVENT_NAME") == "push" or os.environ.get("SKIP_ALERT"):
-        print("코드·이유 파일을 고쳐서 다시 만든 거라 알림은 보내지 않아요.")
+        print("코드·이유 파일을 고쳐서 다시 만든 거라 알림은 보내지 않아요." if os.environ.get("GITHUB_EVENT_NAME") == "push"
+              else "이번 실행은 알림을 보내지 않아요(오늘 알림은 이미 갔거나 알림 없이 시험).")
     elif not args.demo:
         if close:
             if msg:
