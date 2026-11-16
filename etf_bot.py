@@ -1022,6 +1022,16 @@ def theme_names(r):
 
 def send_ntfy(title, message, click_url):
     """신문처럼 보이는 알림: 헤드라인 제목 + 조선일보 명조체 신문 카드 그림 (newscard.py)."""
+    pend = os.environ.get("PENDING_ALERTS")
+    if pend:   # 새 화면이 인터넷에 올라간 뒤 보내려고 적어만 둠 (send_later.py 가 보냄)
+        try:
+            items = json.load(open(pend, encoding="utf-8"))
+        except Exception:
+            items = []
+        items.append({"title": title, "message": message, "click_url": click_url})
+        json.dump(items, open(pend, "w", encoding="utf-8"), ensure_ascii=False)
+        print("알림은 화면이 올라간 뒤 보낼게요:", title)
+        return
     import newscard
     lines = message.split("\n")
     is_close = "장 마감" in title
@@ -1262,7 +1272,12 @@ JS = """
 (function(){function chk(){fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{
  if(v&&v.build&&v.build!==BUILD){const u=new URL(location.href);if(u.searchParams.get('v')===v.build)return;
  u.searchParams.set('v',v.build);location.replace(u.toString());}}).catch(()=>{});}
-chk();document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk();});window.addEventListener('pageshow',e=>{if(e.persisted)chk();});})();
+chk();
+// 알림 주소에는 새 화면 번호(v)가 붙어 있어요. 열린 화면이 그보다 옛것이면 새 화면이 올라올 때까지 5초마다 확인 (최대 3분)
+(function(){const want=new URL(location.href).searchParams.get('v');if(!want||want<=BUILD)return;let n=0;
+ const go=()=>{if(++n>36)return;fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{
+ if(v&&v.build&&v.build>=want&&v.build!==BUILD){const u=new URL(location.href);u.searchParams.set('r',Date.now());location.replace(u.toString());}else setTimeout(go,5000);}).catch(()=>setTimeout(go,5000));};go();})();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk();});window.addEventListener('pageshow',e=>{if(e.persisted)chk();});})();
 function moreList(b){const l=b.previousElementSibling;if(l)l.classList.add('open');filt();}
 let dir={};function sortBy(id,i){const tb=document.querySelector('#'+id+' tbody');const rows=[...tb.rows];const k=id+i;dir[k]=!dir[k];
 rows.sort((a,b)=>{const x=a.cells[i],y=b.cells[i];const vx=x.dataset.v??x.textContent,vy=y.dataset.v??y.textContent;

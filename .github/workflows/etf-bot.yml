@@ -97,6 +97,7 @@ jobs:
           CLOSE_MARKET: ${{ steps.plan.outputs.market }}
           SKIP_ALERT: ${{ steps.plan.outputs.skip }}
           ONLY_MARKETS: ${{ steps.plan.outputs.market }}   # 장 마감 알림이면 그 나라만 새로 계산 (빠르게)
+          PENDING_ALERTS: .pending_alerts.json   # 알림은 새 화면이 올라간 뒤에 (아래 '알림 보내기')
         run: python etf_bot.py
 
       - name: 알림 보낸 기록 남기기 (같은 알림을 두 번 보내지 않게)
@@ -112,3 +113,9 @@ jobs:
           git add docs
           git commit -m "ETF 대시보드 업데이트 $(TZ=Asia/Seoul date +%F)" || echo "변경 없음"
           git pull --rebase -X theirs origin main && git push
+
+      - name: 알림 보내기 (새 화면이 인터넷에 올라간 뒤 — 누르자마자 새 화면이 열리게)
+        if: always() && hashFiles('.pending_alerts.json') != ''
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python send_later.py etf_bot
