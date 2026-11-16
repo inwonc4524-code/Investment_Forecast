@@ -1,7 +1,9 @@
 {
  "source_ok": 549,
  "source_none": 2,
- "fixed_last": [],
+ "fixed_last": [
+  "ChinaAMC CSI 300 Index ETF (41.35→49.10)"
+ ],
  "excluded": [
   "TIGER 배당커버드콜액티브 (1년)",
   "RISE 코리아밸류업위클리고정커버드콜 (1년)",
