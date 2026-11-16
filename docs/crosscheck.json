@@ -1,17 +1,26 @@
 {
- "source_ok": 376,
- "source_none": 0,
+ "source_ok": 549,
+ "source_none": 2,
  "fixed_last": [],
  "excluded": [
   "TIGER 배당커버드콜액티브 (1년)",
   "RISE 코리아밸류업위클리고정커버드콜 (1년)",
   "ACE 미국반도체데일리타겟커버드콜(합성) (1년)"
  ],
- "no_source_markets": [],
+ "no_source_markets": [
+  "CA",
+  "DE",
+  "GB",
+  "SG"
+ ],
  "added_days": [],
  "replaced": [
   "TIGER MSCI Korea TR (야후 가격이 이상해서 최근 269일을 네이버 값으로)",
   "TIGER 200TR (야후 가격이 이상해서 최근 269일을 네이버 값으로)"
+ ],
+ "stale_why": [
+  "518880.SS: 네이버 자료 없음",
+  "513100.SS: 네이버 자료 없음"
  ],
  "stale_excluded": []
 }
