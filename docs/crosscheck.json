@@ -1,10 +1,51 @@
 {
- "source_ok": 11,
- "source_none": 0,
+ "source_ok": 549,
+ "source_none": 2,
  "fixed_last": [],
- "excluded": [],
- "no_source_markets": [],
+ "excluded": [
+  "TIGER 배당커버드콜액티브 (1년)",
+  "RISE 코리아밸류업위클리고정커버드콜 (1년)",
+  "ACE 미국반도체데일리타겟커버드콜(합성) (1년)",
+  "ChinaAMC SSE Science &Tech Innov Board 50 ETF (1일)"
+ ],
+ "no_source_markets": [
+  "CA",
+  "DE",
+  "GB",
+  "SG"
+ ],
  "added_days": [],
- "replaced": [],
- "stale_excluded": []
+ "replaced": [
+  "TIGER MSCI Korea TR (야후 가격이 이상해서 최근 270일을 네이버 값으로)",
+  "TIGER 200TR (야후 가격이 이상해서 최근 270일을 네이버 값으로)"
+ ],
+ "stale_why": [
+  "518880.SS: 네이버 자료 없음",
+  "513100.SS: 네이버 자료 없음"
+ ],
+ "stale_excluded": [
+  "iShares Core DAX (11/13까지)",
+  "iShares EURO STOXX 50 (11/13까지)",
+  "iShares STOXX Europe 600 (11/13까지)",
+  "iShares STOXX Europe 600 은행 (11/13까지)",
+  "iShares Core S&P 500 (11/13까지)",
+  "iShares 나스닥100 (11/13까지)",
+  "iShares Core MSCI World (11/13까지)",
+  "Vanguard FTSE All-World (11/13까지)",
+  "iShares Core MSCI 신흥국 (11/13까지)",
+  "iShares 글로벌 클린에너지 (11/13까지)",
+  "Xetra-Gold (11/13까지)",
+  "iShares Core FTSE 100 (11/13까지)",
+  "Vanguard FTSE 100 (11/13까지)",
+  "Vanguard FTSE 250 (11/13까지)",
+  "iShares 영국 배당 (11/13까지)",
+  "iShares 영국 부동산 (11/13까지)",
+  "iShares 영국 국채 (11/13까지)",
+  "Vanguard S&P 500 (영국) (11/13까지)",
+  "Invesco 나스닥100 (영국) (11/13까지)",
+  "Vanguard FTSE All-World (영국) (11/13까지)",
+  "iShares Core MSCI World (영국) (11/13까지)",
+  "iShares 글로벌 클린에너지 (영국) (11/13까지)",
+  "iShares 금 현물 (영국) (11/13까지)"
+ ]
 }
