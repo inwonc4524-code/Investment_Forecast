@@ -94,6 +94,8 @@ jobs:
       - name: ETF 분석 + 휴대폰 알림
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           CLOSE_MARKET: ${{ steps.plan.outputs.market }}
           SKIP_ALERT: ${{ steps.plan.outputs.skip }}
           ONLY_MARKETS: ${{ steps.plan.outputs.market }}   # 장 마감 알림이면 그 나라만 새로 계산 (빠르게)
@@ -118,4 +120,6 @@ jobs:
         if: always() && hashFiles('.pending_alerts.json') != ''
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python send_later.py etf_bot
