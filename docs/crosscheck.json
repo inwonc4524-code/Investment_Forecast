@@ -1,16 +1,10 @@
 {
- "source_ok": 18,
- "source_none": 2,
+ "source_ok": 11,
+ "source_none": 0,
  "fixed_last": [],
- "excluded": [
-  "ChinaAMC SSE Science &Tech Innov Board 50 ETF (1일)"
- ],
+ "excluded": [],
  "no_source_markets": [],
  "added_days": [],
  "replaced": [],
- "stale_why": [
-  "518880.SS: 네이버 자료 없음",
-  "513100.SS: 네이버 자료 없음"
- ],
  "stale_excluded": []
 }
