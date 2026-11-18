@@ -18,6 +18,7 @@ PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".pricecache", "
 FULL_EVERY_DAYS = 7
 COLS = ["Close", "Adj Close"]
 KEPT = []   # 야후가 빼먹은 최신 날을 저장해 둔 가격으로 지킨 종목 수 (로그용)
+HOLES = []  # 야후가 빼먹은 중간 날을 저장해 둔 가격으로 되살린 종목 수 (로그용)
 MODE = {"mode": "", "full": 0, "inc": 0, "fallback": 0}
 
 
@@ -94,6 +95,22 @@ def _splice(old, new):
             return None
         keep[c] = keep[c] * (a / b)
     out = pd.concat([keep, new[new.index >= d0]])
+    # 야후가 중간의 하루를 빼고 줄 때도 있어요 (2026-11-18: 유럽 장중에 받으면 독일·영국 ETF의 어제(11/17)가 통째로 빠짐
+    # → 오늘 칸을 빼고 나니 마지막 날이 그저께로 돌아감). 최근 열흘 안에 저장해 둔 날이 새 자료에 없으면 되살려 둬요.
+    ratio = {}
+    for c in COLS:
+        if c in new and c in old:
+            ratio[c] = new.at[d0, c] / old.at[d0, c]
+    recent = old[(old.index > d0) & (old.index < new.index[-1])
+                 & (old.index >= new.index[-1] - pd.Timedelta(days=10))]
+    holes = recent[~recent.index.isin(new.index)].dropna(subset=["Close"])
+    holes = holes[holes["Close"] > 0]
+    if len(holes):
+        holes = holes.copy()
+        for c, r in ratio.items():
+            holes[c] = holes[c] * r
+        out = pd.concat([out, holes]).sort_index()
+        HOLES.append(len(holes))
     # 야후가 밤사이 마지막 하루(특히 중국·홍콩·싱가포르 ETF)를 잠깐 빼고 줄 때가 있어요.
     # 저장해 둔 가격에 그보다 최신 날(장 마감 알림 때 받은 확정 가격)이 있으면 버리지 않고 이어 붙여요.
     last = new.index[-1]
@@ -135,6 +152,7 @@ def download(tickers, batch=120, pause=2, recent="1mo", fresh=None, _nofull=Fals
     if not _nofull:
         MODE.update(mode="", full=0, inc=0, fallback=0)
         KEPT.clear()
+        HOLES.clear()
     data, full_at = _load()
     if fresh is not None and data:
         fresh = set(fresh)
@@ -174,7 +192,8 @@ def download(tickers, batch=120, pause=2, recent="1mo", fresh=None, _nofull=Fals
     print(f"가격 받기: {'전체 새로' if full else '최근 1달만 이어 붙임'}"
           f" (이어 붙임 {MODE['inc']} · 전체로 받음 {MODE['full'] + MODE['fallback']})"
           + ("" if full else f" · 마지막 전체 받기 {age}일 전")
-          + (f" · 야후가 빼먹은 최신 날을 저장해 둔 가격으로 지킨 곳 {len(KEPT)}" if KEPT else ""))
+          + (f" · 야후가 빼먹은 최신 날을 저장해 둔 가격으로 지킨 곳 {len(KEPT)}" if KEPT else "")
+          + (f" · 야후가 빼먹은 중간 날을 되살린 곳 {len(HOLES)}" if HOLES else ""))
     return Raw({t: data[t] for t in tickers if t in data})
 
 
