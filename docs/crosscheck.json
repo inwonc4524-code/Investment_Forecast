@@ -1,10 +1,56 @@
 {
- "source_ok": 11,
- "source_none": 0,
+ "source_ok": 549,
+ "source_none": 2,
  "fixed_last": [],
- "excluded": [],
- "no_source_markets": [],
- "added_days": [],
+ "excluded": [
+  "TIGER 배당커버드콜액티브 (1년)",
+  "RISE 코리아밸류업위클리고정커버드콜 (1년)",
+  "ACE 미국반도체데일리타겟커버드콜(합성) (1년)"
+ ],
+ "no_source_markets": [
+  "CA",
+  "DE",
+  "GB",
+  "SG"
+ ],
+ "added_days": [
+  "Huatai-PB CSI 300 ETF (+11-19)",
+  "ChinaAMC China 50 ETF (+11-19)",
+  "China Southern CSI 500 Index ETF (+11-19)",
+  "E Fund ChiNext ETF (+11-19)",
+  "ChinaAMC SSE Science &Tech Innov Board 50 ETF (+11-19)",
+  "CPIC CSI All Share Semicon & Eqpt Idx ETF (+11-19)",
+  "Guotai CSI All Share Invt Bkg & Brokerage ETF (+11-19)",
+  "Hwabao WP CSI Medical Service Index ETF (+11-19)",
+  "Huatai-PineBridge Photovoltaic Industry Idx ETF (+11-19)",
+  "Huatai-PineBridge SSE Dividend ETF (+11-19)",
+  "Tracker Fund of Hong Kong (+11-19)",
+  "Hang Seng China Enterprises Index ETF (+11-19)",
+  "CSOP Hang Seng TECH Index ETF HKD (+11-19)",
+  "Hang Seng TECH Index ETF HKD (+11-19)",
+  "iShares FTSE China A50 ETF (+11-19)",
+  "ChinaAMC CSI 300 Index ETF (+11-19)",
+  "GLOBAL X HANG SENG HIGH DIV YIELD ETF (+11-19)",
+  "SPDR Gold Shares (+11-19)",
+  "ChinaAMC CSI New Energy Vehicles Index ETF (+11-19)",
+  "GF CNI NEV Battery Index ETF (+11-19)",
+  "ChinaAMC CSI Robot Index ETF (+11-19)",
+  "E Fund CSI Artificial Intelligence Index ETF (+11-19)",
+  "Guotai CSI National Defense ETF (+11-19)",
+  "E Fund CSI 300 Pharmaceutical Index ETF (+11-19)",
+  "Penghua CSI Alcoholic Drink Index ETF (+11-19)",
+  "China Universal CSI Consumption Index ETF (+11-19)",
+  "iShares Hang Seng TECH ETF (+11-19)",
+  "iShares Core MSCI China ETF (+11-19)",
+  "iShares Core SENSEX India ETF (+11-19)"
+ ],
  "replaced": [],
- "stale_excluded": []
+ "stale_why": [
+  "518880.SS: 네이버 자료 없음",
+  "513100.SS: 네이버 자료 없음"
+ ],
+ "stale_excluded": [
+  "금 ETF (화안) (11/18까지)",
+  "나스닥100 ETF (궈타이) (11/18까지)"
+ ]
 }
