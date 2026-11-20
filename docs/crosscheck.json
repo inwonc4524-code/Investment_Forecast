@@ -1,10 +1,47 @@
 {
- "source_ok": 11,
- "source_none": 0,
+ "source_ok": 549,
+ "source_none": 2,
  "fixed_last": [],
- "excluded": [],
- "no_source_markets": [],
- "added_days": [],
- "replaced": [],
- "stale_excluded": []
+ "excluded": [
+  "TIGER 배당커버드콜액티브 (1년)",
+  "RISE 코리아밸류업위클리고정커버드콜 (1년)"
+ ],
+ "no_source_markets": [
+  "CA",
+  "DE",
+  "GB",
+  "SG"
+ ],
+ "added_days": [
+  "Huatai-PB CSI 300 ETF (+11-20)",
+  "ChinaAMC China 50 ETF (+11-20)",
+  "China Southern CSI 500 Index ETF (+11-20)",
+  "E Fund ChiNext ETF (+11-20)",
+  "ChinaAMC SSE Science &Tech Innov Board 50 ETF (+11-20)",
+  "CPIC CSI All Share Semicon & Eqpt Idx ETF (+11-20)",
+  "Guotai CSI All Share Invt Bkg & Brokerage ETF (+11-20)",
+  "Hwabao WP CSI Medical Service Index ETF (+11-20)",
+  "Huatai-PineBridge Photovoltaic Industry Idx ETF (+11-20)",
+  "Huatai-PineBridge SSE Dividend ETF (+11-20)",
+  "ChinaAMC CSI New Energy Vehicles Index ETF (+11-20)",
+  "GF CNI NEV Battery Index ETF (+11-20)",
+  "ChinaAMC CSI Robot Index ETF (+11-20)",
+  "E Fund CSI Artificial Intelligence Index ETF (+11-20)",
+  "Guotai CSI National Defense ETF (+11-20)",
+  "E Fund CSI 300 Pharmaceutical Index ETF (+11-20)",
+  "Penghua CSI Alcoholic Drink Index ETF (+11-20)",
+  "China Universal CSI Consumption Index ETF (+11-20)"
+ ],
+ "replaced": [
+  "TIGER MSCI Korea TR (야후 가격이 이상해서 최근 270일을 네이버 값으로)",
+  "TIGER 200TR (야후 가격이 이상해서 최근 270일을 네이버 값으로)"
+ ],
+ "stale_why": [
+  "518880.SS: 네이버 자료 없음",
+  "513100.SS: 네이버 자료 없음"
+ ],
+ "stale_excluded": [
+  "금 ETF (화안) (11/19까지)",
+  "나스닥100 ETF (궈타이) (11/19까지)"
+ ]
 }
