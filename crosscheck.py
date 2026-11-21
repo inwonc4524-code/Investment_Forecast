@@ -198,6 +198,12 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
         #    (주의: 네이버 한국 일별 가격은 장 마감 뒤 넥스트레이드 애프터마켓(~20시)까지 합친 '통합' 값이라
         #     거래소 정규장 종가(15:30)와 몇백~몇천 원 다를 수 있어요. 그래서 작은 차이는 고치지 않아요 — 2026-11-13 확인)
         sv, yv = float(src.loc[last]), float(y.iloc[-1])
+        # 2026-11-21 점검: 액면분할 날 네이버가 아직 분할 전 가격을 주면(샌디스크 8→1 분할: 야후 94.39 · 네이버 755.16,
+        # 키엔스 1→5 분할: 야후 14,722 · 네이버 73,610) 맞는 야후 값을 틀린 값으로 '고쳐' 버렸어요.
+        # 두 값 차이가 분할 비율(2·3·4·5·8·10배 …)과 맞으면 분할 차이로 보고 이번엔 비교하지 않아요.
+        if sv > 0 and yv > 0 and abs(yv / sv - 1) > 0.3 and pricecache._nice(yv / sv) not in (None, 1):
+            REPORT.setdefault("split_skip", []).append(f"{names.get(t, t)} (야후 {yv:,.2f} · 네이버 {sv:,.2f})")
+            continue
         # 한국은 정규장 종가(15:30)를 쓰기로 해서(2026-11-13 사용자 결정), 통합 가격인 네이버 값으로 바꾸지 않아요
         if mkt_of.get(t) != "KR" and sv > 0 and abs(yv / sv - 1) > 0.02:
             ratio = sv / yv
@@ -266,6 +272,8 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
             json.dump({"rot": rot + ROTATE}, open(state_path, "w"))
         except Exception:
             pass
+    if REPORT.get("split_skip"):
+        print("액면분할 차이로 이번엔 비교하지 않은 곳:", ", ".join(REPORT["split_skip"][:15]))
     print(f"다른 사이트와 비교: {REPORT['source_ok']}곳 비교 · 마지막 가격 고침 {len(REPORT['fixed_last'])}곳 · "
           f"순위에서 뺀 곳 {len(REPORT['excluded'])}곳 · 비교 자료 없음 {REPORT['source_none']}곳 · {took:.0f}초")
     if REPORT["added_days"]:

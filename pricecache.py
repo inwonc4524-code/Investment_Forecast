@@ -196,7 +196,12 @@ def download(tickers, batch=120, pause=2, recent="1mo", fresh=None, _nofull=Fals
         if redo:
             got = _grab(redo, "max", batch, pause)
             MODE["fallback"] = len(got)
-            data.update(got)
+            # 2026-11-21 점검: 최근 1달 받기가 'database is locked' 같은 일시 오류로 실패해 전체로 다시 받으면,
+            # 야후가 마지막 하루를 빼고 줄 때 저장해 둔 확정 가격(예: USO 11/20)이 통째로 지워졌어요.
+            # 받기 자체가 실패했던 종목은 저장본과 이어 붙여서 최신 날을 지켜요.
+            for t, g in got.items():
+                s = _splice(data[t], g) if (t in data and t in have and t not in rec) else None
+                data[t] = g if s is None else s
     _save(data, full_at)
     print(f"가격 받기: {'전체 새로' if full else '최근 1달만 이어 붙임'}"
           f" (이어 붙임 {MODE['inc']} · 전체로 받음 {MODE['full'] + MODE['fallback']})"
