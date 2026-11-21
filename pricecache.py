@@ -27,6 +27,9 @@ class Raw(dict):
     columns = pd.MultiIndex.from_tuples([("_", "_")])
 
 
+SHORT = []   # 전체 새로 받기에서 야후가 짧은 자료만 줘서 저장본 옛날 가격으로 지킨 종목
+
+
 def _load():
     try:
         with gzip.open(PATH, "rb") as f:
@@ -162,6 +165,7 @@ def download(tickers, batch=120, pause=2, recent="1mo", fresh=None, _nofull=Fals
         MODE.update(mode="", full=0, inc=0, fallback=0)
         KEPT.clear()
         HOLES.clear()
+        SHORT.clear()
     data, full_at = _load()
     if fresh is not None and data:
         fresh = set(fresh)
@@ -178,6 +182,19 @@ def download(tickers, batch=120, pause=2, recent="1mo", fresh=None, _nofull=Fals
         MODE.update(mode="full")
         got = _grab(tickers, "max", batch, pause)
         MODE["full"] = len(got)
+        # 2026-11-21 점검: 샌디스크(SNDK)는 11/17 액면분할 뒤 전체 새로 받기에서 야후가 분할 뒤 4일치만 줘서,
+        # 저장해 둔 1년 넘는 가격이 통째로 지워지고 점수표에서 빠졌어요. 새로 받은 자료가 저장본보다
+        # 한 달 넘게 늦게 시작하면 저장본 옛날 가격을 이어 붙여 지켜요(분할은 겹치는 첫날 비율로 맞춰요).
+        for t, g in list(got.items()):
+            o = data.get(t)
+            try:
+                if o is not None and len(o) and len(g) and g.index[0] > o.index[0] + pd.Timedelta(days=31):
+                    s = _splice(o, g)
+                    if s is not None:
+                        got[t] = s
+                        SHORT.append(t)
+            except Exception:
+                pass
         data = {**{t: data[t] for t in tickers if t in data}, **got}
         full_at = now
     else:
@@ -207,7 +224,8 @@ def download(tickers, batch=120, pause=2, recent="1mo", fresh=None, _nofull=Fals
           f" (이어 붙임 {MODE['inc']} · 전체로 받음 {MODE['full'] + MODE['fallback']})"
           + ("" if full else f" · 마지막 전체 받기 {age}일 전")
           + (f" · 야후가 빼먹은 최신 날을 저장해 둔 가격으로 지킨 곳 {len(KEPT)}" if KEPT else "")
-          + (f" · 야후가 빼먹은 중간 날을 되살린 곳 {len(HOLES)}" if HOLES else ""))
+          + (f" · 야후가 빼먹은 중간 날을 되살린 곳 {len(HOLES)}" if HOLES else "")
+          + (f" · 야후 자료가 짧아 옛날 가격을 지킨 곳 {', '.join(SHORT[:10])}" if SHORT else ""))
     return Raw({t: data[t] for t in tickers if t in data})
 
 
