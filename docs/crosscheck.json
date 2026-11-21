@@ -33,8 +33,8 @@
   "China Universal CSI Consumption Index ETF (+11-20)"
  ],
  "replaced": [
-  "TIGER MSCI Korea TR (야후 가격이 이상해서 최근 270일을 네이버 값으로)",
-  "TIGER 200TR (야후 가격이 이상해서 최근 270일을 네이버 값으로)"
+  "TIGER MSCI Korea TR (야후 가격이 이상해서 최근 269일을 네이버 값으로)",
+  "TIGER 200TR (야후 가격이 이상해서 최근 269일을 네이버 값으로)"
  ],
  "stale_why": [
   "518880.SS: 네이버 자료 없음",
@@ -42,6 +42,7 @@
  ],
  "stale_excluded": [
   "금 ETF (화안) (11/19까지)",
-  "나스닥100 ETF (궈타이) (11/19까지)"
+  "나스닥100 ETF (궈타이) (11/19까지)",
+  "United States Oil Fund LP (11/19까지)"
  ]
 }
