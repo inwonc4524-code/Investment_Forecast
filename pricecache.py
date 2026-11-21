@@ -113,15 +113,24 @@ def _splice(old, new):
         HOLES.append(len(holes))
     # 야후가 밤사이 마지막 하루(특히 중국·홍콩·싱가포르 ETF)를 잠깐 빼고 줄 때가 있어요.
     # 저장해 둔 가격에 그보다 최신 날(장 마감 알림 때 받은 확정 가격)이 있으면 버리지 않고 이어 붙여요.
+    # 2026-11-21: 새 자료의 마지막 날이 저장해 둔 가격에는 없을 때(저장본에 그날이 비어 있음)도 지켜요.
+    # 싱가포르 ETF: 저장본엔 11/18·11/20 이 있고 11/19 가 비었는데, 토요일 아침 야후는 11/19 까지만 줘서
+    # 'last in old.index' 조건에 걸려 11/20(금) 확정 가격이 버려지고 화면이 목요일 값으로 돌아갔어요.
+    # 그럴 땐 겹치는 첫날(d0)의 비율로 맞춰요.
     last = new.index[-1]
     tail = old[old.index > last].dropna(subset=["Close"]).tail(3)
-    if len(tail) and last in old.index:
+    tail = tail[tail["Close"] > 0]
+    if len(tail):
         tail = tail.copy()
         for c in COLS:
             if c in tail and c in new and c in old:
-                a, b = new.at[last, c], old.at[last, c]
-                if pd.notna(a) and pd.notna(b) and a > 0 and b > 0:
-                    tail[c] = tail[c] * (a / b)
+                if last in old.index:
+                    a, b = new.at[last, c], old.at[last, c]
+                    r = a / b if (pd.notna(a) and pd.notna(b) and a > 0 and b > 0) else None
+                else:
+                    r = ratio.get(c)
+                if r is not None and pd.notna(r) and r > 0:
+                    tail[c] = tail[c] * r
         out = pd.concat([out, tail])
         KEPT.append(len(tail))
     return out
