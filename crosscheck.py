@@ -37,6 +37,9 @@ REPORT = {"source_ok": 0, "source_none": 0, "fixed_last": [], "excluded": [], "n
           "added_days": [], "replaced": []}
 MKT_TZ = {"US": "America/New_York", "JP": "Asia/Tokyo", "HK": "Asia/Hong_Kong", "CN": "Asia/Shanghai",
           "VN": "Asia/Ho_Chi_Minh", "KR": "Asia/Seoul"}
+# 그 나라 장이 끝나고 조금 지난 시각(현지). 이 시각이 지나면 '오늘'도 끝난 날로 보고 채워요 (2026-11-21 점검:
+# 미국은 한국 아침 실행 때 현지가 아직 '오늘' 저녁이라, 야후가 빼먹은 금요일 값(USO 11/20)을 못 채웠어요)
+MKT_DONE = {"US": "16:30", "JP": "16:00", "HK": "16:40", "CN": "15:30", "VN": "15:30", "KR": "16:00"}
 MAX_ADD_DAYS = 3             # 야후가 빼먹은 최신 날은 최대 이만큼만 네이버 값으로 채움
 
 
@@ -132,6 +135,28 @@ def _ret(s, end, days):
 PERIODS = [("1d", "1d", 0.05), ("1w", 7, 0.08), ("1m", 28, 0.12), (1, 365, 0.25)]   # (기간, 날짜, 허용 차이)
 
 
+
+def align_split(src, y):
+    """네이버(비교용) 가격 중 야후와 분할 비율(2·4·5·8·10배 …)만큼 차이 나는 날은 야후 기준으로 나눠 맞춰요.
+    2026-11-21 점검: 샌디스크는 11/20 에 1→8 분할하면서 하루 −16% 떨어져서, 네이버 쪽 하루 튐이 10.5배로 보여
+    fix_jumps 가 8배가 아니라 10배로 잘못 맞췄어요. 같은 날 야후 값과 하루하루 비교하면 8배를 바로 찾을 수 있어요."""
+    try:
+        both = src.index.intersection(y.index)
+        if not len(both):
+            return src
+        r = src.loc[both] / y.loc[both]
+        src = src.copy()
+        n = 0
+        for d, v in r.items():
+            if pd.notna(v) and v > 0 and abs(v - 1) > 0.3:
+                f = pricecache._nice(float(v))
+                if f not in (None, 1):
+                    src.loc[d] = src.loc[d] / f
+                    n += 1
+        return src
+    except Exception:
+        return src
+
 def run(closes, raw, mkt_of, names=None, state_path=None):
     """closes: 수익률용(배당 포함) / raw: 실제 가격. 틀린 마지막 가격은 고치고, 수익률이 크게 다른 기간은 BAD에 기록."""
     names = names or {}
@@ -181,6 +206,10 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
         REPORT["source_ok"] += 1
         # 다른 사이트(네이버 해외)는 액면분할 전 가격을 그대로 둘 때가 있어(예: IWF 2026-04-29 1→4주),
         # 비교 전에 야후 쪽과 같은 방법(pricecache.fix_jumps)으로 분할 튐을 맞춰요 (2026-11-14 검증)
+        src = src.copy()
+        src.index = _with_tz(src.index, raw[t])
+        if mkt_of.get(t) != "KR":   # 한국은 네이버가 기준이라 그대로(망가진 야후 가격을 찾는 데 써요)
+            src = align_split(src, raw[t])   # 먼저 같은 날 야후와 분할 비율 맞추기 (2026-11-21)
         try:
             src = pricecache.fix_jumps(src, 1.6, f"(비교용 네이버) {t}")
         except Exception:
@@ -218,7 +247,10 @@ def run(closes, raw, mkt_of, names=None, state_path=None):
         #      애프터마켓 차이가 없어서 같이 채워요. 마지막 날 값이 2% 안으로 같을 때만.
         mk = mkt_of.get(t, "")
         if mk in MKT_TZ:
-            today = pd.Timestamp.now(tz=MKT_TZ[mk]).tz_localize(None).normalize()
+            now_l = pd.Timestamp.now(tz=MKT_TZ[mk]).tz_localize(None)
+            today = now_l.normalize()
+            if mk in MKT_DONE and now_l >= today + pd.Timedelta(MKT_DONE[mk] + ":00"):
+                today = today + pd.Timedelta(days=1)   # 오늘 장도 이미 끝났어요
             sv_last = float(src.loc[last])
             newer = src[(src.index > last)]
             newer = newer[[_naive(d).normalize() < today for d in newer.index]].iloc[:MAX_ADD_DAYS]
