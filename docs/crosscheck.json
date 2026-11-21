@@ -13,6 +13,7 @@
   "SG"
  ],
  "added_days": [
+  "United States Oil Fund LP (+11-20)",
   "Huatai-PB CSI 300 ETF (+11-20)",
   "ChinaAMC China 50 ETF (+11-20)",
   "China Southern CSI 500 Index ETF (+11-20)",
@@ -42,7 +43,6 @@
  ],
  "stale_excluded": [
   "금 ETF (화안) (11/19까지)",
-  "나스닥100 ETF (궈타이) (11/19까지)",
-  "United States Oil Fund LP (11/19까지)"
+  "나스닥100 ETF (궈타이) (11/19까지)"
  ]
 }
