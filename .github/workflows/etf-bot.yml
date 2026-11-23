@@ -17,6 +17,9 @@ on:
     # 한국시간 월~금 오후 5시 27분·57분 — 홍콩장(5시) 마감 뒤
     - cron: "27 8 * * 1-5"
     - cron: "57 8 * * 1-5"
+    # 한국시간 월~금 저녁 8시 7분·37분 — 한국 애프터마켓(8시) 끝난 뒤 '애프터마켓까지' 가격만 새로 (알림 없음)
+    - cron: "7 11 * * 1-5"
+    - cron: "37 11 * * 1-5"
   workflow_dispatch:      # Actions 화면에서 "Run workflow" 버튼으로 바로 실행
     inputs:
       close_market:
@@ -59,10 +62,12 @@ jobs:
             "41 6 * * 1-5"|"11 7 * * 1-5") M="KR"; NB="15:51"; KEY="KR";;
             "17 7 * * 1-5"|"47 7 * * 1-5") M="CN"; NB="16:21"; KEY="CN";;
             "27 8 * * 1-5"|"57 8 * * 1-5") M="HK"; NB="17:31"; KEY="HK";;
+            "7 11 * * 1-5"|"37 11 * * 1-5") M="KR"; NB="20:01"; KEY=""; QUIET=1;;
           esac
           D=$(TZ=Asia/Seoul date +%F)
           SKIP=""
           if [ "${{ inputs.no_alert }}" = "true" ]; then SKIP=1; echo "시험 실행이라 알림은 안 보내요"; fi
+          if [ -n "$QUIET" ]; then SKIP=1; echo "저녁 애프터마켓 가격만 새로 (알림 없음)"; fi
           if [ -n "$KEY" ] && grep -qx "$D $KEY" docs/alerts_sent.txt 2>/dev/null; then
             SKIP=1; echo "오늘 '$KEY' 알림은 먼저 시작한 실행이 이미 보냈어요 → 이번엔 화면만 새로 만들어요"
           fi
@@ -105,6 +110,7 @@ jobs:
       - name: 알림 보낸 기록 남기기 (같은 알림을 두 번 보내지 않게)
         if: steps.plan.outputs.key != '' && steps.plan.outputs.skip != '1'
         run: |
+          if [ -f .alert_skipped ]; then echo "오늘 가격이 없어 알림을 안 보냈어요 — 기록 안 남김"; exit 0; fi
           echo "$(TZ=Asia/Seoul date +%F) ${{ steps.plan.outputs.key }}" >> docs/alerts_sent.txt
           tail -n 60 docs/alerts_sent.txt > /tmp/a && mv /tmp/a docs/alerts_sent.txt
 

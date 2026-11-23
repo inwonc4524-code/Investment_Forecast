@@ -468,11 +468,12 @@ def demo_intraday(closes, seed=3):
 
 
 def apply_intraday(df):
-    """1일 = 그 나라 장 시작 → 장 마감 (시간별 가격이 없으면 전날 마감 대비)"""
+    """1일 = 전날 마감 → 오늘 마감 (뉴스·증권 앱과 같은 방식, 2026-11-23부터)"""
     def one(r):
         it = INTRA.get(r.ticker)
         if it and it["date"].strftime("%Y-%m-%d") >= r.date:
-            return it["close"][-1] / it["open"] - 1
+            pc = prev_close(r.ticker, it["date"])
+            return it["close"][-1] / (pc or it["open"]) - 1   # 어제 마감 대비
         return r.r1d
     def prev(r):   # 전날 마감 → 오늘 마감 (증권사 앱의 '오늘 등락률'과 같은 방식, 실제 가격 기준)
         real = RAW.get(r.ticker)
@@ -490,6 +491,63 @@ def apply_intraday(df):
     return df
 
 
+def prev_close(ticker, day, s=None):
+    """그날(day) 바로 전 장날의 실제 마감 가격 (뉴스·증권 앱의 '전일 종가')"""
+    for ser in (RAW.get(ticker) if "RAW" in globals() else None, s):
+        if ser is None:
+            continue
+        ser = ser.dropna()
+        ser = ser[ser.index < pd.Timestamp(day).normalize()]
+        if len(ser):
+            return float(ser.iloc[-1])
+    return None
+
+
+AFTER = {}   # 한국: 네이버 통합 가격(정규장 뒤 애프터마켓까지, 오후 8시 마감) {티커: (날짜, 가격)}
+AFTER_AT = ""
+
+
+def fetch_after(tickers):
+    """한국 종목의 '애프터마켓까지 합친' 가격 (네이버·증권 앱에 보이는 값).
+    봇의 가격은 정규장(오후 3:30) 종가 그대로 두고, 화면에 옆에 작게 같이 보여 줘요 (2026-11-23 사용자 결정)."""
+    global AFTER_AT
+    import time as _t
+    from concurrent.futures import ThreadPoolExecutor
+    kr = [t for t in tickers if t.endswith((".KS", ".KQ"))]
+
+    def one(t):
+        try:
+            r = requests.get(f"https://m.stock.naver.com/api/stock/{t.split('.')[0]}/price?pageSize=1&page=1",
+                             headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+            row = (r.json() or [None])[0]
+            _t.sleep(0.15)
+            if row and row.get("closePrice"):
+                return t, (row.get("localTradedAt", "")[:10], float(str(row["closePrice"]).replace(",", "")))
+        except Exception:
+            pass
+        return t, None
+
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        for t, v in ex.map(one, kr):
+            if v:
+                AFTER[t] = v
+    AFTER_AT = datetime.now(KST).strftime("%H:%M")
+    print(f"애프터마켓 가격 {len(AFTER)}/{len(kr)}곳 ({AFTER_AT} 기준)")
+
+
+def after_text(ticker, day, p1):
+    """'애프터마켓 180,600원 (+1.7%)' — 정규장 종가와 다를 때만"""
+    v = AFTER.get(ticker)
+    if not v or not p1 or pd.isna(p1) or v[0] != pd.Timestamp(day).strftime("%Y-%m-%d"):
+        return ""
+    ch = v[1] / p1 - 1
+    if abs(ch) < 0.0005:
+        return ""
+    done = AFTER_AT >= "20:00" or AFTER_AT < "09:00"
+    when = "" if done else f" <span class='hint'>({AFTER_AT} · 저녁 8시까지 거래 중)</span>"
+    return (f"<small class='aft'>🌙 애프터마켓까지 {money(v[1], 'KR')} ({updown(ch, pct(ch))}){when}</small>")
+
+
 def intraday_term(ticker, s=None):
     it = INTRA.get(ticker)
     if not it:
@@ -505,6 +563,9 @@ def intraday_term(ticker, s=None):
                 "ups": int(total > 0), "start": s.index[-1], "end": s.index[-1],
                 "p0": p0, "p1": p1, "daily": True, "is1d": True}
     o, cl = it["open"], it["close"]
+    pc = prev_close(ticker, it["date"], s)   # 2026-11-23: 1일은 '어제 마감 대비' (뉴스·앱과 같게)
+    if pc:
+        o = pc
     prev = [o] + cl[:-1]
     blocks = [c / p - 1 for c, p in zip(cl, prev)]
     close_hm = CLOSE_LOCAL[local_tz(ticker)]
@@ -994,7 +1055,10 @@ def close_message(df, market, today):
     if sub.empty:
         return None
     last = sub.date.max()
-    late = "" if last == today else f"\n(아직 오늘 가격이 안 들어와서 {last} 기준이에요)"
+    if market != "US" and last != today:   # 그 나라 장이 쉬는 날(공휴일)엔 알림을 보내지 않아요
+        print(f"{name}: 오늘({today}) 가격이 없어요 (마지막 {last}) — 장이 쉬었거나 아직 안 들어와서 알림 안 보냄")
+        return None
+    late = ""
     when = "오늘"
     if market == "US":   # 미국장은 한국 시간 새벽에 끝나서 날짜가 하루 전이에요
         d = pd.Timestamp(last)
@@ -1004,7 +1068,7 @@ def close_message(df, market, today):
     if up.empty:
         out.append(f"{when}은 오른 곳이 없어요. 다 같이 쉬는 날이에요 🛌")
     else:
-        out.append(f"🔝 {when} 장 시작부터 마감까지 많이 오른 순서")
+        out.append(f"🔝 {when} 어제 마감보다 많이 오른 순서")
         for i, (_, r) in enumerate(up.head(5).iterrows(), 1):
             out.append(f"{i}. {r['name']} {pct(r.r1d)}" + (f"  ({theme_names(r)})" if theme_names(r) else ""))
     down = sub[sub.r1d < 0].tail(1)
@@ -1137,8 +1201,9 @@ def price_box(r):
     d = p1 - p0
     sign = "+" if d > 0 else "-" if d < 0 else ""
     diff = sign + money(abs(d), m)
-    return (f"<div class='won pr'><small>실제 가격</small><b>{updown(d, diff)}</b>"
-            f"<small>{money(p0, m)} → {money(p1, m)}</small></div>")
+    aft = after_text(r.get("ticker"), r.get("end"), p1) if (m == "KR" and r.get("is1d")) else ""
+    return (f"<div class='won pr'><small>실제 가격 (정규장 종가)</small><b>{updown(d, diff)}</b>"
+            f"<small>{money(p0, m)} → {money(p1, m)}</small>{aft}</div>")
 
 
 def day_text(r):
@@ -1150,7 +1215,7 @@ def day_text(r):
     if r.get("upto"):
         return (f"{MKT_NAME.get(m, '')} {d.month}월 {d.day}일 장 시작부터 {r['upto']} 무렵 마지막 거래까지"
                 f" <span class='hint'>(마감 가격이 아직 없어요)</span>")
-    return f"{MKT_NAME.get(m, '')} {d.month}월 {d.day}일 장 시작부터 마감까지"
+    return f"{MKT_NAME.get(m, '')} {d.month}월 {d.day}일 (전날 마감 → 이날 마감, 칸은 1시간씩)"
 
 
 def why_html(text):
@@ -1483,6 +1548,10 @@ def main():
             cross = ex.submit(cross_all, closes, universe, target)
             fetch_intraday(target or tickers, wait=cross.result)
         tick("다른 사이트 비교 + 시간별 가격")
+        try:
+            fetch_after(tickers)
+        except Exception as e:
+            print("애프터마켓 가격 못 받음:", e)
         if only:   # 다른 나라는 지난 실행의 시간별 가격·비교 결과를 이어서 씀
             for t, v in (pricecache.load_state("intra", {}) or {}).items():
                 if MKT_OF.get(t) not in only and t not in INTRA:
@@ -1551,6 +1620,8 @@ def main():
             if msg:
                 send_ntfy(f"{FLAG.get(close, '')} {MKT_NAME.get(close, close)}장 마감 · 오늘 많이 오른 ETF", msg,
                           f"{url}#long-{close.lower()}-1d" if url else url)
+            else:   # 오늘 가격이 없음(공휴일·늦음) → '보냄' 기록을 남기지 않아 30분 뒤 예비 실행이 다시 확인
+                open(os.path.join(HERE, ".alert_skipped"), "w").close()
         else:
             send_ntfy("오늘의 ETF 추천", msg, url)
             us_msg = close_message(df, "US", today)   # 어젯밤 끝난 미국장도 따로 알림
