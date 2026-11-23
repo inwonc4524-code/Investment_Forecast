@@ -1201,7 +1201,11 @@ def price_box(r):
     d = p1 - p0
     sign = "+" if d > 0 else "-" if d < 0 else ""
     diff = sign + money(abs(d), m)
-    aft = after_text(r.get("ticker"), r.get("end"), p1) if (m == "KR" and r.get("is1d")) else ""
+    aft = ""
+    if m == "KR":   # 한국: 마지막 장날 정규장 종가 옆에 '애프터마켓까지' 가격 (모든 기간 카드에)
+        last_day = r.get("end") if r.get("is1d") else (RAW[r["ticker"]].index[-1] if r.get("ticker") in RAW else None)
+        if last_day is not None:
+            aft = after_text(r.get("ticker"), last_day, p1)
     return (f"<div class='won pr'><small>실제 가격 (정규장 종가)</small><b>{updown(d, diff)}</b>"
             f"<small>{money(p0, m)} → {money(p1, m)}</small>{aft}</div>")
 
@@ -1283,7 +1287,7 @@ def long_panel(rows, years):
             f"<small>{updown(r['total'])}</small></div></li>")
     note = "이 기간 동안 가격이 내려간 ETF는 뺐어요. "
     return (f"<p class='how'>🟥 = 그 {unit}에 올랐어요 &nbsp; 🟦 = 그 {unit}에 내렸어요 &nbsp; ⬜ = 장이 쉬었어요 "
-            f"(칸을 누르고 있으면 날짜가 보여요)<br>1일 = 그 나라 장 시작부터 마감까지 1시간씩 · 1주 = 7일 · 1달 = 4주 · 1년 = 12달. 마감 시각은 나라마다 달라요 (한국시간: 한국·일본 오후 3:30 · 중국 오후 4시 · 홍콩 오후 5시 · 싱가포르 오후 6시 · 독일·영국 새벽 1:30 · 미국·캐나다 아침 6시)<br>💬 = 그 기간에 왜 올랐는지 Claude가 뉴스를 보고 짧게 정리한 거예요 (틀릴 수 있어요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
+            f"(칸을 누르고 있으면 날짜가 보여요)<br>1일 = 전날 마감 → 오늘 마감(뉴스·증권 앱과 같은 방식), 칸은 1시간씩 · 가격은 정규장 종가이고 한국은 저녁 8시 뒤 '🌙 애프터마켓까지' 가격도 같이 보여요 · 1주 = 7일 · 1달 = 4주 · 1년 = 12달. 마감 시각은 나라마다 달라요 (한국시간: 한국·일본 오후 3:30 · 중국 오후 4시 · 홍콩 오후 5시 · 싱가포르 오후 6시 · 독일·영국 새벽 1:30 · 미국·캐나다 아침 6시)<br>💬 = 그 기간에 왜 올랐는지 Claude가 뉴스를 보고 짧게 정리한 거예요 (틀릴 수 있어요)<br>{note}생긴 지 {pname}이 안 된 ETF는 계산에서 빠져요.</p>"
             f"<ol class='longlist'>{''.join(items)}<li class='empty'>여기에 맞는 ETF가 없어요</li></ol>"
             f"<button class='more' onclick='moreList(this)'>더보기</button>")
 
