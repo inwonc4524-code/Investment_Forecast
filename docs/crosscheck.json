@@ -1,16 +1,55 @@
 {
- "source_ok": 376,
- "source_none": 0,
+ "source_ok": 549,
+ "source_none": 2,
  "fixed_last": [],
  "excluded": [
   "TIGER 배당커버드콜액티브 (1년)",
   "RISE 코리아밸류업위클리고정커버드콜 (1년)"
  ],
- "no_source_markets": [],
- "added_days": [],
- "replaced": [
-  "TIGER MSCI Korea TR (야후 가격이 이상해서 최근 270일을 네이버 값으로)",
-  "TIGER 200TR (야후 가격이 이상해서 최근 270일을 네이버 값으로)"
+ "no_source_markets": [
+  "CA",
+  "DE",
+  "GB",
+  "SG"
  ],
- "stale_excluded": []
+ "added_days": [
+  "Huatai-PB CSI 300 ETF (+11-26)",
+  "ChinaAMC China 50 ETF (+11-26)",
+  "China Southern CSI 500 Index ETF (+11-26)",
+  "E Fund ChiNext ETF (+11-26)",
+  "ChinaAMC SSE Science &Tech Innov Board 50 ETF (+11-26)",
+  "CPIC CSI All Share Semicon & Eqpt Idx ETF (+11-26)",
+  "Guotai CSI All Share Invt Bkg & Brokerage ETF (+11-26)",
+  "Hwabao WP CSI Medical Service Index ETF (+11-26)",
+  "Huatai-PineBridge Photovoltaic Industry Idx ETF (+11-26)",
+  "Huatai-PineBridge SSE Dividend ETF (+11-26)",
+  "Tracker Fund of Hong Kong (+11-26)",
+  "Hang Seng China Enterprises Index ETF (+11-26)",
+  "CSOP Hang Seng TECH Index ETF HKD (+11-26)",
+  "Hang Seng TECH Index ETF HKD (+11-26)",
+  "iShares FTSE China A50 ETF (+11-26)",
+  "ChinaAMC CSI 300 Index ETF (+11-26)",
+  "GLOBAL X HANG SENG HIGH DIV YIELD ETF (+11-26)",
+  "SPDR Gold Shares (+11-26)",
+  "ChinaAMC CSI New Energy Vehicles Index ETF (+11-26)",
+  "GF CNI NEV Battery Index ETF (+11-26)",
+  "ChinaAMC CSI Robot Index ETF (+11-26)",
+  "E Fund CSI Artificial Intelligence Index ETF (+11-26)",
+  "Guotai CSI National Defense ETF (+11-26)",
+  "E Fund CSI 300 Pharmaceutical Index ETF (+11-26)",
+  "Penghua CSI Alcoholic Drink Index ETF (+11-26)",
+  "China Universal CSI Consumption Index ETF (+11-26)",
+  "iShares Hang Seng TECH ETF (+11-26)",
+  "iShares Core MSCI China ETF (+11-26)",
+  "iShares Core SENSEX India ETF (+11-26)"
+ ],
+ "replaced": [],
+ "stale_why": [
+  "518880.SS: 네이버 자료 없음",
+  "513100.SS: 네이버 자료 없음"
+ ],
+ "stale_excluded": [
+  "금 ETF (화안) (11/25까지)",
+  "나스닥100 ETF (궈타이) (11/25까지)"
+ ]
 }
