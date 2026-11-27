@@ -1,10 +1,16 @@
 {
- "source_ok": 11,
+ "source_ok": 376,
  "source_none": 0,
  "fixed_last": [],
- "excluded": [],
+ "excluded": [
+  "TIGER 배당커버드콜액티브 (1년)",
+  "RISE 코리아밸류업위클리고정커버드콜 (1년)"
+ ],
  "no_source_markets": [],
  "added_days": [],
- "replaced": [],
+ "replaced": [
+  "TIGER MSCI Korea TR (야후 가격이 이상해서 최근 270일을 네이버 값으로)",
+  "TIGER 200TR (야후 가격이 이상해서 최근 270일을 네이버 값으로)"
+ ],
  "stale_excluded": []
 }
