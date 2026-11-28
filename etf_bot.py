@@ -299,6 +299,24 @@ CLOSE_LOCAL = {"Europe/Berlin": "17:30", "Europe/London": "16:30", "America/Toro
                "America/New_York": "16:00"}   # 정규장 마감 (그 나라 시간)
 
 
+def close_hm_on(tz, day):
+    """그날의 정규장 마감 시각 (그 나라 시간). 미국은 일찍 끝나는 날(오후 1시)이 있어요:
+    추수감사절 다음 날(11월 넷째 목요일 다음 금요일), 크리스마스이브(12/24 월~목), 독립기념일 전날(7/3 월~목).
+    (2026-11-28 1주일 돌아보기: 11/27 반나절 장에 '13:30부터 1시간' 칸이 하나 더 생겼던 것 고침)"""
+    hm = CLOSE_LOCAL[tz]
+    if tz != "America/New_York" or day is None:
+        return hm
+    d = pd.Timestamp(day)
+    if d.tz is not None:
+        d = d.tz_localize(None)
+    d = d.normalize()
+    if d.month == 11 and d.weekday() == 4 and 23 <= d.day <= 29:   # 넷째 목요일(22~28일) 다음 날
+        return "13:00"
+    if (d.month, d.day) in ((12, 24), (7, 3)) and d.weekday() <= 3:
+        return "13:00"
+    return hm
+
+
 def day_index(s):
     """가격 표의 날짜를 시간대 없는 '날짜'로 (시간대가 붙어 있으면 비교할 때 오류가 나서)"""
     idx = pd.DatetimeIndex(s.index)
@@ -311,7 +329,7 @@ def fill_close(t, it):
     """야후가 마지막 30분 등을 빼고 줄 때가 있어서, 그날 실제 마감 가격으로 마지막 칸을 채움"""
     real = RAW.get(t)
     _end = it["times"][-1] + pd.Timedelta(hours=1)
-    _h, _m = map(int, CLOSE_LOCAL[local_tz(t)].split(":"))
+    _h, _m = map(int, close_hm_on(local_tz(t), it["times"][-1]).split(":"))
     _close = it["times"][-1].normalize() + pd.Timedelta(hours=_h, minutes=_m)
     upto = f"{_end.hour}시" if _end <= _close else (f"{_h}시" if _m == 0 else f"{_h}시 {_m}분")
     if real is None or real.empty:
@@ -568,7 +586,7 @@ def intraday_term(ticker, s=None):
         o = pc
     prev = [o] + cl[:-1]
     blocks = [c / p - 1 for c, p in zip(cl, prev)]
-    close_hm = CLOSE_LOCAL[local_tz(ticker)]
+    close_hm = close_hm_on(local_tz(ticker), it["times"][-1] if it.get("times") else it["date"])
     hh, mm = map(int, close_hm.split(":"))
 
     def lab(t, is_last):
